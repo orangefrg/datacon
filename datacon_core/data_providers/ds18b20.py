@@ -45,8 +45,6 @@ class Ds18b20(Provider):
 
     def get_name(self):
         return self._name
-    def get_measured_parameter(self):
-        return "temperature"
     def get_description(self):
         return self._description
     def get_current_reading(self, src_id=None):
@@ -76,6 +74,8 @@ class Ds18b20(Provider):
                 current["error"] = "CRC error"
             else:
                 current["reading"] = temp
+                current["units"] = "°C"
+                current["measured_parameter"] = "temperature"
             reading["reading"].append(current)
         reading["end_time"] = datetime.datetime.utcnow().isoformat()
         return reading

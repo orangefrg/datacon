@@ -7,10 +7,18 @@ class Provider:
 
     def get_name(self):
         raise NotImplementedError
-    def get_measured_parameter(self):
-        raise NotImplementedError
     def get_description(self):
         raise NotImplementedError
+
+    # Current reading should be a dictionary:
+    # name - provider name
+    # start_time, end_time - UTC times of start and end of measurement
+    # reading - list of following dicts:
+    # - name - sensor name
+    # - measured_parameter - measured parameter type (e.g. temperature)
+    # - reading - current sensor reading
+    # - units - reading units (optional)
+    # - error - error name (optional)
     def get_current_reading(self, src_id=None):
         raise NotImplementedError
 
