@@ -39,6 +39,7 @@ class Ds18b20(Provider):
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
         self._refresh_sensors_list()
+        super().__init__()
 
 
 # Overriding defaults
@@ -80,17 +81,3 @@ class Ds18b20(Provider):
         reading["end_time"] = datetime.datetime.utcnow().isoformat()
         return reading
 
-    # Activate and deactivate scheduled data retrieval
-    # time_settings is a dict with following fields:
-    # type (required): 'interval' or 'schedule'
-    # interval (if interval): interval in seconds (integer)
-    # schedule (if schedule): list of tuples (hour, minute, second)
-    def activate_polling(self, time_settings):
-        raise NotImplementedError
-    def deactivate_polling(self):
-        raise NotImplementedError
-
-    def set_parameter(self, parameter_name, parameter_value):
-        raise NotImplementedError
-    def get_parameter(self, parameter_name):
-        raise NotImplementedError

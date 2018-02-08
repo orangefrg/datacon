@@ -12,7 +12,7 @@ class OrangePiSelfDiag(Provider):
         self._description = description
         self._total_re = re.compile("MemTotal:(.*?)(\d+)")
         self._free_re = re.compile("MemFree:(.*?)(\d+)")
-
+        super().__init__()
 
     def _get_soc_temp(self, res_list):
         tmp = { "name": "SoC",
@@ -121,18 +121,3 @@ class OrangePiSelfDiag(Provider):
                  
         reading["end_time"] = datetime.datetime.utcnow().isoformat()
         return reading
-
-    # Activate and deactivate scheduled data retrieval
-    # time_settings is a dict with following fields:
-    # type (required): 'interval' or 'schedule'
-    # interval (if interval): interval in seconds (integer)
-    # schedule (if schedule): list of tuples (hour, minute, second)
-    def activate_polling(self, time_settings):
-        raise NotImplementedError
-    def deactivate_polling(self):
-        raise NotImplementedError
-
-    def set_parameter(self, parameter_name, parameter_value):
-        raise NotImplementedError
-    def get_parameter(self, parameter_name):
-        raise NotImplementedError

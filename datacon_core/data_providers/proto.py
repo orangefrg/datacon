@@ -1,9 +1,13 @@
 import sched, time
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Data provider
 # Main abstract class for implementing data collection entities
 
 class Provider:
+
+    def __init__(self, scheduler=None):
+        self._sched = scheduler or BackgroundScheduler()
 
     def get_name(self):
         raise NotImplementedError
@@ -24,13 +28,36 @@ class Provider:
 
     # Activate and deactivate scheduled data retrieval
     # time_settings is a dict with following fields:
-    # type (required): 'interval' or 'schedule'
-    # interval (if interval): interval in seconds (integer)
-    # schedule (if schedule): list of tuples (hour, minute, second)
-    def activate_polling(self, time_settings):
-        raise NotImplementedError
+    # interval: interval in seconds (integer)
+    # cron: dict of cron values -
+    # year, month, day, week, day_of_week, hour, minute, second
+    # if both delay and cron are passed, the delay will be used
+    # collectors is a list of data collectors
+    def _poll_current_reading(self, collectors):
+        collectors[0].upload_data(self.get_current_reading(), collectors[1:] if len(collectors) > 0 else None)
+    def set_polling(self, time_settings, collectors):
+
+        if "delay" in time_settings:
+            self._sched.add_job(self._poll_current_reading, "interval", kwargs={'collectors': collectors}, seconds=time_settings["delay"])
+
+        elif "cron" in time_settings:
+            for p in ["year", "month", "day", "week", "day_of_week", "hour", "minute", "second"]:
+                if p not in time_settings["cron"]:
+                    time_settings["cron"][p] = None
+            self._sched.add_job(self._poll_current_reading, "cron", kwargs={'collectors': collectors},
+            year=time_settings["cron"]["year"], month=time_settings["cron"]["month"],
+            day=time_settings["cron"]["day"], week=time_settings["cron"]["week"],
+            day_of_week=time_settings["cron"]["day_of_week"], hour=time_settings["cron"]["hour"],
+            minute=time_settings["cron"]["minute"], second=time_settings["cron"]["second"])
+        else:
+            return False
+        self._sched.start(paused=True)
+        return True
+
+    def activate_polling(self):
+        self._sched.resume()
     def deactivate_polling(self):
-        raise NotImplementedError
+        self._sched.pause()
 
     def set_parameter(self, parameter_name, parameter_value):
         raise NotImplementedError
