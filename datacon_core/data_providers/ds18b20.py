@@ -4,7 +4,7 @@ import datetime
 
 
 class Ds18b20(Provider):
-    dallas_base_dir = '/sys/bus/w1/devices/'
+    DALLAS_BASE_DIR = '/sys/bus/w1/devices/'
 
     def _get_sensor_by_id(self, sensor_id):
         for s in self._sensors:
@@ -14,7 +14,7 @@ class Ds18b20(Provider):
 
     def _add_sensor(self, sensor_id):
         sens = {"id": sensor_id,
-                "full_path": self.dallas_base_dir + sensor_id + "/w1_slave"}
+                "full_path": self.DALLAS_BASE_DIR + sensor_id + "/w1_slave"}
         if sensor_id in self._sensor_aliases:
             sens["alias"] = self._sensor_aliases[sensor_id]
         sens["added"] = datetime.datetime.utcnow().isoformat()
@@ -23,15 +23,13 @@ class Ds18b20(Provider):
         self._sensors.append(sens)
 
     def _refresh_sensors_list(self):
-        for f in os.listdir(self.dallas_base_dir):
+        for f in os.listdir(self.DALLAS_BASE_DIR):
             if re.match("28(.*)", f):
                 if self._get_sensor_by_id(f) is None:
                     self._add_sensor(f)
 
 
-    def __init__(self, name, description, sensor_aliases={}):
-        self._name = name
-        self._description = description
+    def __init__(self, name, description, scheduler=None, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
         
@@ -39,15 +37,11 @@ class Ds18b20(Provider):
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
         self._refresh_sensors_list()
-        super().__init__()
+        super().__init__(name, description, scheduler)
 
 
 # Overriding defaults
 
-    def get_name(self):
-        return self._name
-    def get_description(self):
-        return self._description
     def get_current_reading(self, src_id=None):
         reading = {}
         reading["name"] = self._name

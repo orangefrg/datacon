@@ -21,7 +21,7 @@ class SimplePrinter(Collector):
 
 class SimpleFileWrite(Collector):
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, scheduler=None):
         self._active = False
         self._filename = filename if filename is not None else "simple_file_write"
 

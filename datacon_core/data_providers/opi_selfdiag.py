@@ -7,12 +7,10 @@ class OrangePiSelfDiag(Provider):
     soc_temp_file = "/etc/armbianmonitor/datasources/soctemp"
     root_partition = "/"
 
-    def __init__(self, name, description, sensor_aliases={}):
-        self._name = name
-        self._description = description
+    def __init__(self, name, description, scheduler=None):
         self._total_re = re.compile("MemTotal:(.*?)(\d+)")
         self._free_re = re.compile("MemFree:(.*?)(\d+)")
-        super().__init__()
+        super().__init__(name, description, scheduler)
 
     def _get_soc_temp(self, res_list):
         tmp = { "name": "SoC",
@@ -101,12 +99,6 @@ class OrangePiSelfDiag(Provider):
 
 # Overriding defaults
 
-    def get_name(self):
-        return self._name
-    def get_measured_parameter(self):
-        return "temperature"
-    def get_description(self):
-        return self._description
     def get_current_reading(self, src_id=None):
         reading = {}
         reading["name"] = self._name

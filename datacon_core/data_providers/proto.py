@@ -6,13 +6,15 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 class Provider:
 
-    def __init__(self, scheduler=None):
+    def __init__(self, name, description, scheduler=None):
         self._sched = scheduler or BackgroundScheduler()
+        self._name = name
+        self._description = description
 
     def get_name(self):
-        raise NotImplementedError
+        return self._name
     def get_description(self):
-        raise NotImplementedError
+        return self._description
 
     # Current reading should be a dictionary:
     # name - provider name
