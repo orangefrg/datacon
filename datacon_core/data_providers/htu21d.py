@@ -138,11 +138,13 @@ class HTU21D(Provider):
             self._heater_operation = self.HEATER_OPERATION
 
 
-    def __init__(self, name, description, scheduler=None, bus_number=0):
+    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+                 command_routing_keys=[], pass_to=None, bus_number=0):
         self._bus = SMBus(bus_number)
         self._heater_operation = self.HEATER_OPERATION
         self._heater_cooldown = self.HEATER_COOLDOWN
-        super().__init__(name, description, scheduler)
+        super().__init__(name, description, scheduler, amqp, publish_routing_key,
+                         command_routing_keys, pass_to)
 
 
 # Overriding defaults

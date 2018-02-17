@@ -12,16 +12,26 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 initial_config()
 sch = BackgroundScheduler()
+sch.start()
 # filename = sys.argv[1]
 
 ALIASES = {"28-0000043a174f": "Outside",
            "28-0000041b3610": "Inside"}
 
-# DALLAS = Ds18b20("DS1", "Local dallas sensors", sensor_aliases=ALIASES)
-# ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only")
-# HTU = HTU21D("GY-21", "Temperature and humidity measurement")
+DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, publish_routing_key="printer.collect", sensor_aliases=ALIASES)
+ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, publish_routing_key="printer.collect")
+HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, publish_routing_key="printer.collect")
 HB = Heartbeat("Heartbeat", "Data provider for test purposes", sch, publish_routing_key="printer.collect")
+
+DALLAS.set_polling({"delay": 10})
+ORANGE.set_polling({"delay": 20})
+HTU.set_polling({"delay": 30})
 HB.set_polling({"delay": 5})
+
+
+DALLAS.activate_polling()
+ORANGE.activate_polling()
+HTU.activate_polling()
 HB.activate_polling()
 
 PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
@@ -38,7 +48,7 @@ PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"]
 
 try:
         while True:
-                time.sleep(2)
+                time.sleep(5)
 except KeyboardInterrupt:
         print("End")
         

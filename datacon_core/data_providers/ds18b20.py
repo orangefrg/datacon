@@ -29,7 +29,8 @@ class Ds18b20(Provider):
                     self._add_sensor(f)
 
 
-    def __init__(self, name, description, scheduler, sensor_aliases={}):
+    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+                 command_routing_keys=[], pass_to=None, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
         
@@ -37,7 +38,8 @@ class Ds18b20(Provider):
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
         self._refresh_sensors_list()
-        super().__init__(name, description, scheduler)
+        super().__init__(name, description, scheduler, amqp, publish_routing_key,
+                         command_routing_keys, pass_to)
 
 
 # Overriding defaults

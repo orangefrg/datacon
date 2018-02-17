@@ -7,10 +7,12 @@ class OrangePiSelfDiag(Provider):
     soc_temp_file = "/etc/armbianmonitor/datasources/soctemp"
     root_partition = "/"
 
-    def __init__(self, name, description, scheduler=None):
+    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+                 command_routing_keys=[], pass_to=None):
         self._total_re = re.compile("MemTotal:(.*?)(\d+)")
         self._free_re = re.compile("MemFree:(.*?)(\d+)")
-        super().__init__(name, description, scheduler)
+        super().__init__(name, description, scheduler, amqp, publish_routing_key,
+                         command_routing_keys, pass_to)
 
     def _get_soc_temp(self, res_list):
         tmp = { "name": "SoC",
