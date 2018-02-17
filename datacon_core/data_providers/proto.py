@@ -1,15 +1,36 @@
 import sched, time
-from apscheduler.schedulers.background import BackgroundScheduler
+from pika import BlockingConnection
+import json
+
+DEFAULT_EXCHANGE = "MainData"
 
 # Data provider
 # Main abstract class for implementing data collection entities
 
 class Provider:
 
-    def __init__(self, name, description, scheduler=None):
-        self._sched = scheduler or BackgroundScheduler()
+
+    def log_message(self, message):
+        print("{}: {}".format(self._name, message))
+
+    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+                 command_routing_keys=[], pass_to=None):
+        self._sched = scheduler
         self._name = name
         self._description = description
+        self._invalid_config = not amqp and (pass_to is None or len(pass_to) == 0)
+
+        if amqp:
+            self._pass_to = None
+            self._publish_routing_key = publish_routing_key
+            self._connection = BlockingConnection()
+            self._channel = self._connection.channel()
+            if command_routing_keys is not None and len(command_routing_keys) > 0:
+                self._channel.queue_declare(queue="{}.provideq".format(self._name), durable=True)
+                for k in command_routing_keys:
+                    self._channel.queue_bind("{}.provideq".format(self._name), DEFAULT_EXCHANGE, "{}.provide".format(k))
+        else:
+            self._pass_to = pass_to
 
     def get_name(self):
         return self._name
@@ -28,25 +49,30 @@ class Provider:
     def get_current_reading(self, src_id=None):
         raise NotImplementedError
 
+    def _poll_current_reading(self):
+        current_data = json.dumps(self.get_current_reading())
+        if not self._invalid_config and self._pass_to is None:
+            self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, current_data)
+        else:
+            for collector in self._pass_to:
+                collector.upload_data(current_data)
+
     # Activate and deactivate scheduled data retrieval
     # time_settings is a dict with following fields:
-    # interval: interval in seconds (integer)
+    # delay: interval in seconds (integer)
     # cron: dict of cron values -
     # year, month, day, week, day_of_week, hour, minute, second
     # if both delay and cron are passed, the delay will be used
     # collectors is a list of data collectors
-    def _poll_current_reading(self, collectors):
-        collectors[0].upload_data(self.get_current_reading(), collectors[1:] if len(collectors) > 0 else None)
-    def set_polling(self, time_settings, collectors):
-
+    def set_polling(self, time_settings):
         if "delay" in time_settings:
-            self._sched.add_job(self._poll_current_reading, "interval", kwargs={'collectors': collectors}, seconds=time_settings["delay"])
+            self._sched.add_job(self._poll_current_reading, "interval", seconds=time_settings["delay"])
 
         elif "cron" in time_settings:
             for p in ["year", "month", "day", "week", "day_of_week", "hour", "minute", "second"]:
                 if p not in time_settings["cron"]:
                     time_settings["cron"][p] = None
-            self._sched.add_job(self._poll_current_reading, "cron", kwargs={'collectors': collectors},
+            self._sched.add_job(self._poll_current_reading, "cron",
             year=time_settings["cron"]["year"], month=time_settings["cron"]["month"],
             day=time_settings["cron"]["day"], week=time_settings["cron"]["week"],
             day_of_week=time_settings["cron"]["day_of_week"], hour=time_settings["cron"]["hour"],

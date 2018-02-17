@@ -29,7 +29,7 @@ class Ds18b20(Provider):
                     self._add_sensor(f)
 
 
-    def __init__(self, name, description, scheduler=None, sensor_aliases={}):
+    def __init__(self, name, description, scheduler, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
         
