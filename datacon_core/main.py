@@ -10,6 +10,7 @@ from data_collectors.simple import SimplePrinter, SimpleFileWrite
 from data_collectors.sender import JSONSender
 from rmq_config import initial_config
 from apscheduler.schedulers.background import BackgroundScheduler
+import shared_config
 
 initial_config()
 sch = BackgroundScheduler()
@@ -24,11 +25,10 @@ ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, publish_routing
 HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, publish_routing_key="all.collect")
 HB = Heartbeat("Heartbeat", "Data provider for test purposes", sch, publish_routing_key="all.collect")
 
-DALLAS.set_polling({"delay": 10})
-ORANGE.set_polling({"delay": 20})
-HTU.set_polling({"delay": 30})
-HB.set_polling({"delay": 5})
-
+DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
+ORANGE.set_polling({"cron": {"minute": "1-51/10"}})
+HTU.set_polling({"cron": {"minute": "0-50/10"}})
+HB.set_polling({"cron": {"minute": "2-52/10"}})
 
 DALLAS.activate_polling()
 ORANGE.activate_polling()
@@ -36,7 +36,7 @@ HTU.activate_polling()
 HB.activate_polling()
 
 # PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
-SENDER = JSONSender("json-sender", "Simple JSON HTTP(S) sender", ["all", "sender"])
+SENDER = JSONSender("json-sender", "Simple JSON HTTP(S) sender", ["all", "sender"], address=shared_config.URL_TO_SEND)
 # WRITER = SimpleFileWrite("writer", "Deafult file writer", ["all", "writer"], False, "test_with_rabbit")
 
 # DALLAS.set_polling({"cron": {"minute": "0-50/10"}}, [WRITER, PRINTER])

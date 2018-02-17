@@ -64,7 +64,7 @@ class HTU21D(Provider):
         self._dewpoint_reached = fabs(self._last_temperature - self._dewpoint) <= self.DEWPOINT_DELTA
 
     def _get_dewpoint(self):
-        out_dew = {"hame": "Dewpoint",
+        out_dew = {"name": "Dewpoint",
                    "measured_parameter": "temperature",
                    "units": "°C"}
         if self._last_humidity is None or self._last_temperature is None:

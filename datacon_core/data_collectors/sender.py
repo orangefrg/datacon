@@ -4,15 +4,14 @@ import requests
 
 class JSONSender(Collector):
 
-    def __init__(self, name, description, routing_keys=[], amqp=True, address="127.0.0.1", port="80"):
+    def __init__(self, name, description, routing_keys=[], amqp=True, address="http://127.0.0.1"):
         self._address = address
-        self._port = port
         super().__init__(name, description, routing_keys, amqp)
 
     def upload_data(self, data):
-        json_data = json.loads(str(data, 'utf-8'))
+        data = {"message": str(data, 'utf-8')}
         try:
-            r = requests.post("https://{}:{}".format(self._address, self._port), verify=False, data=json_data)
+            r = requests.post(self._address, verify=False, data=data)
             self.log_message(r.text)
             return r.status_code == requests.codes.ok
         except requests.ConnectionError:
