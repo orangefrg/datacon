@@ -16,13 +16,14 @@ class DataSource(models.Model):
         verbose_name_plural = "Источники данных"
 
     def __str__(self):
-        return "{} ({} {}) [{}]".format(self.name, self.maintainer.first_name,
+        return "{} - {} ({} {}) [{}]".format(self.name, self.uid, self.maintainer.first_name,
                                         self.maintainer.last_name, "ACT" if self.active else "OFF")
 
 class DataTag(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, verbose_name="Источник")
     name = models.CharField(max_length=255, verbose_name="Название")
-    units = models.CharField(max_length=40, verbose_name="Единицы измерения", blank=True)
+    units = models.CharField(max_length=40, verbose_name="Единицы измерения", blank=True, default="")
+    display_name = models.CharField(max_length=200, verbose_name="Отображаемое название", blank=True, default="")
     class Meta:
         ordering = ['name']
         verbose_name = "Тэг"
@@ -32,6 +33,8 @@ class DataTag(models.Model):
         return "{}.{}".format(self.source.name, self.name)
 
     def __str__(self):
+        if len(self.display_name) > 0:
+            return "{} ({})".format(self.display_name, self.get_full_name())
         return self.get_full_name()
 
 class Error(models.Model):
@@ -54,6 +57,10 @@ class Reading(models.Model):
         abstract = True
     def __str__(self):
         return "{} = {} ({})".format(self.tag.get_full_name(), self.reading, self.timestamp_packet)
+    def timestamp_packet_as_string(self):
+        return self.timestamp_packet.isoformat()
+    def timestamp_receive_as_string(self):
+        return self.timestamp_receive.isoformat()
 
 class ReadingNumeric(Reading):
     reading = models.FloatField(null=True)
@@ -73,5 +80,18 @@ class ReadingText(Reading):
     reading = models.TextField(null=True)
     class Meta:
         ordering = ['timestamp_receive']
-        verbose_name = "Тесктовое значение"
+        verbose_name = "Текстовое значение"
         verbose_name_plural = "Текстовые значения"
+
+class DataSet(models.Model):
+    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name="Идентификатор")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
+    name = models.CharField(max_length=200, verbose_name="Название")
+    tags = models.ManyToManyField(DataTag, verbose_name="Тэги")
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Набор данных"
+        verbose_name_plural = "Наборы данных"
+    def __str__(self):
+        return "{} - {} ({} {}), {} тэгов".format(self.name, self.uid, self.user.first_name, self.user.last_name,
+                                                  self.tags.count())

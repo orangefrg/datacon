@@ -23,7 +23,10 @@ def write_reading(datasource, message_as_dict):
     tag_name = message_as_dict["name"]
     for r in message_as_dict["reading"]:
         current_tag = "{}.{}.{}".format(tag_name, r["name"], r["measured_parameter"])
-        current_tag_db, was_new = DataTag.objects.get_or_create(source=datasource, name=current_tag, units=r["units"])
+        current_tag_db, was_new = DataTag.objects.get_or_create(source=datasource, name=current_tag)
+        if was_new:
+            current_tag_db.units = r["units"]
+            current_tag_db.save()
         if "error" in r and len(r["error"]) > 0:
             error, was_new = Error.objects.get_or_create(error=r["error"])
         else:

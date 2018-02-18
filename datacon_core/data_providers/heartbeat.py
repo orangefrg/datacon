@@ -19,16 +19,16 @@ class Heartbeat(Provider):
         reading["reading"] = []
 
         reading["reading"].append({
-            "name": "counter",
+            "name": "test",
             "units": "",
-            "measured_parameter": "test",
+            "measured_parameter": "counter",
             "reading": self._counter
         })
 
         reading["reading"].append({
-            "name": "random",
+            "name": "test",
             "units": "",
-            "measured_parameter": "test",
+            "measured_parameter": "random",
             "reading": randint(0, HEARTBEAT_UPPER_LIMIT)
         })
 

@@ -13,6 +13,11 @@ class Provider:
     def log_message(self, message):
         print("{}: {}".format(self._name, message))
 
+
+    def _revoke_channel(self):
+        self._connection = BlockingConnection()
+        self._channel = self._connection.channel()
+            
     def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
                  command_routing_keys=[], pass_to=None):
         self._sched = scheduler
@@ -29,6 +34,7 @@ class Provider:
                 self._channel.queue_declare(queue="{}.provideq".format(self._name), durable=True)
                 for k in command_routing_keys:
                     self._channel.queue_bind("{}.provideq".format(self._name), DEFAULT_EXCHANGE, "{}.provide".format(k))
+            self._connection.close()
         else:
             self._pass_to = pass_to
 
@@ -54,9 +60,11 @@ class Provider:
         current_data = json.dumps(self.get_current_reading())
         if not self._invalid_config and self._pass_to is None:
             self.log_message("Sending to AMQP")
+            self._revoke_channel()
             self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, current_data)
+            self._connection.close()
         else:
-            self.log_message("Sending im simple way")
+            self.log_message("Sending in simple way")
             for collector in self._pass_to:
                 collector.upload_data(current_data)
 
