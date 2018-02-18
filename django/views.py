@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.template import loader
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .receiver.receiver import debug_print, process_message
@@ -47,5 +48,9 @@ def retriever_view(request):
         return HttpResponse(status=400)
     return _return_json_or_error(retriever_worker(request.POST))
     
+def web_view(request, dataset_id):
+    template = loader.get_template('test_debug.html')
+    context = {"dataset_id": dataset_id, "page_name": "Data web view", "page_description": "Data web view"}
+    return HttpResponse(template.render(context, request))
     
     

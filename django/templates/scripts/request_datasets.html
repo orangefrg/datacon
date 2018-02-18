@@ -1,0 +1,41 @@
+<script>
+    function obtainDataSetID() {
+        dataset_id = $( "#dataSetID" ).val();
+    };
+    function requestData() {
+        $.post("/datacon/display/" + dataset_id, processData);
+    };
+    function processData(response, status) {
+        var results = response.results;
+        results.forEach(createOrUpdateWidget);
+    };
+
+    function createWidget(widget_name) {
+        var upper_div = document.createElement("div");
+        upper_div.setAttribute("class", "card");
+        upper_div.setAttribute("datatag", widget_name);
+        var body_div = document.createElement("div");
+        body_div.setAttribute("class", "card-body col-sm");
+        upper_div.appendChild(body_div);
+        var tag_label = document.createElement("h5");
+        tag_label.setAttribute("class", "card-title data-tag-name");
+        body_div.appendChild(tag_label);
+        var value_label = document.createElement("label");
+        value_label.setAttribute("class", "card-text display-3 data-tag-value");
+        body_div.appendChild(value_label);
+        var main_container = $( "#main-container" ).append(upper_div);
+        return upper_div;
+    }
+
+    function createOrUpdateWidget(result) {
+        var widget_name = result.name;
+        var reading_value = result.reading[0].reading + result.units;
+        var widget_display_name = result.display_name;
+        var current_widget = $("[datatag='" + widget_name + "']");
+        if(!current_widget.length) {
+            current_widget = createWidget(widget_name);
+        }
+        $( current_widget ).find(".data-tag-name").text(widget_display_name);
+        $( current_widget ).find(".data-tag-value").text(reading_value);
+    }
+</script>

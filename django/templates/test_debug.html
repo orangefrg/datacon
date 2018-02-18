@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<!-- Header include -->
+{% include "elements/header.html" %}
+<body>
+    <!-- Scripts include -->
+    {% include "elements/scripts.html" %}
+    {% include "scripts/request_datasets.html" %}
+    <!-- Page here -->
+    {% csrf_token %}
+    <input type="hidden" id="dataSetID" value="{{dataset_id}}"/>
+    <div class="container" id="main-container">
+        <!-- Here will be widgets for parameters -->
+    </div>
+    <!-- All custom scripts below -->
+    <script>
+        var csrftoken;
+        var dataset_id;
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $( document ).ready(function() {
+            csrftoken = Cookies.get('csrftoken');
+            obtainDataSetID();
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+            requestData();
+            setInterval(requestData, 10000);
+        });
+    </script>
+</body>
+</html>
