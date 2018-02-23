@@ -83,6 +83,19 @@ class ReadingText(Reading):
         verbose_name = "Текстовое значение"
         verbose_name_plural = "Текстовые значения"
 
+class AlertValues(models.Model):
+    parameter = models.OneToOneField(DataTag, on_delete=models.CASCADE, verbose_name="Параметр", related_name="alert_values")
+    upper_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+                                       verbose_name="Верхняя нормативная граница", related_name="upper_boundary_of")
+    lower_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+                                       verbose_name="Нижняя нормативная граница", related_name="lower_boundary_of")
+    critical_upper_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+                                                verbose_name="Верхняя аварийная граница", related_name="critical_upper_boundary_of")
+    critical_lower_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+                                                verbose_name="Нижняя аварийная граница", related_name="critical_lower_boundary_of")
+    strict_equal_value = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+                                     verbose_name="Строгое нормативное значение", related_name="strict_equal_value_of")
+
 class DataSet(models.Model):
     uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name="Идентификатор")
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")

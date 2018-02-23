@@ -11,31 +11,42 @@
     };
 
     function createWidget(widget_name) {
-        var upper_div = document.createElement("div");
-        upper_div.setAttribute("class", "card");
-        upper_div.setAttribute("datatag", widget_name);
+        var card_wrapper = document.createElement("div");
+        card_wrapper.setAttribute("class", "col-12 col-md-6 col-lg-4 mt-4");
+        var card = document.createElement("div");
+        card.setAttribute("class", "card");
+        card.setAttribute("datatag", widget_name);
         var body_div = document.createElement("div");
-        body_div.setAttribute("class", "card-body col-sm");
-        upper_div.appendChild(body_div);
+        body_div.setAttribute("class", "card-body");
+        card.appendChild(body_div);
         var tag_label = document.createElement("h5");
         tag_label.setAttribute("class", "card-title data-tag-name");
         body_div.appendChild(tag_label);
         var value_label = document.createElement("label");
         value_label.setAttribute("class", "card-text display-3 data-tag-value");
         body_div.appendChild(value_label);
-        var main_container = $( "#main-container" ).append(upper_div);
-        return upper_div;
+        var timestamp_label = document.createElement("p");
+        timestamp_label.setAttribute("class", "card-text");
+        var timestamp_small = document.createElement("small");
+        timestamp_small.setAttribute("class", "text-muted data-tag-timestamp");
+        timestamp_label.appendChild(timestamp_small);
+        body_div.appendChild(timestamp_label);
+        card_wrapper.appendChild(card);
+        var main_container = $( "#main-container" ).append(card_wrapper);
+        return card;
     }
 
     function createOrUpdateWidget(result) {
         var widget_name = result.name;
         var reading_value = result.reading[0].reading + result.units;
         var widget_display_name = result.display_name;
+        var reading_timestamp = result.reading[0].timestamp_packet;
         var current_widget = $("[datatag='" + widget_name + "']");
         if(!current_widget.length) {
             current_widget = createWidget(widget_name);
         }
         $( current_widget ).find(".data-tag-name").text(widget_display_name);
         $( current_widget ).find(".data-tag-value").text(reading_value);
+        $( current_widget ).find(".data-tag-timestamp").text(getTimeFromNow(reading_timestamp));
     }
 </script>

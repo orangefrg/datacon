@@ -4,13 +4,15 @@
 {% include "elements/header.html" %}
 <body>
     <!-- Scripts include -->
-    {% include "elements/scripts.html" %}
+    {% include "scripts/basic.html" %}
+    {% include "scripts/convert_date.html" %}
     {% include "scripts/request_datasets.html" %}
     <!-- Page here -->
     {% csrf_token %}
     <input type="hidden" id="dataSetID" value="{{dataset_id}}"/>
-    <div class="container" id="main-container">
-        <!-- Here will be widgets for parameters -->
+    <div class="container">
+        <div class="row" id="main-container">
+        </div>
     </div>
     <!-- All custom scripts below -->
     <script>
@@ -31,7 +33,7 @@
                 }
             });
             requestData();
-            setInterval(requestData, 10000);
+            setInterval(requestData, 30000);
         });
     </script>
 </body>

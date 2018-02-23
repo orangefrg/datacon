@@ -1,4 +1,4 @@
-from datacon.retriever.basic import get_dataset_latest, get_dataset_range, get_latest_valid_tag, get_range_valid_tag
+from .basic import get_dataset_latest, get_dataset_range, get_latest_valid_tag, get_range_valid_tag
 from datetime import datetime
 import json
 from uuid import UUID
