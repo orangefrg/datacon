@@ -1,12 +1,13 @@
 from .proto import Collector
 import json
+import logging
 
 
 class SimplePrinter(Collector):
 
-    def __init__(self, name, description, routing_keys=[], amqp=True, process_as_json=True):
+    def __init__(self, name, description, routing_keys=[], amqp=True, loglevel=logging.DEBUG, process_as_json=True):
         self._process_as_json = process_as_json
-        super().__init__(name, description, routing_keys, amqp)
+        super().__init__(name, description, routing_keys, amqp, loglevel)
 
     def upload_data(self, data):
         data = str(data, 'utf-8')
@@ -19,10 +20,10 @@ class SimplePrinter(Collector):
 
 class SimpleFileWrite(Collector):
 
-    def __init__(self, name, description, routing_keys=[], amqp=True, process_as_json=True, filename=None):
+    def __init__(self, name, description, routing_keys=[], amqp=True, logging=logging.DEBUG, process_as_json=True, filename=None):
         self._filename = filename if filename is not None else "simple_file_write"
         self._process_as_json = process_as_json
-        super().__init__(name, description, routing_keys, amqp)
+        super().__init__(name, description, routing_keys, amqp, logging)
 
     def upload_data(self, data):
         data = str(data, 'utf-8')

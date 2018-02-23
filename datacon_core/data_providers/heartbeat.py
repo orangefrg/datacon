@@ -1,16 +1,19 @@
 from .proto import Provider
 from random import randint
 import datetime
+import logging
+import sys
 
 HEARTBEAT_UPPER_LIMIT = 4096
 
 class Heartbeat(Provider):
     def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None):
+                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
         self._counter = 0
         self._increment = True
         super().__init__(name, description, scheduler, amqp, publish_routing_key,
-                         command_routing_keys, pass_to)
+                         command_routing_keys, pass_to, loglevel)
+        self.log_message("Starting heartbeat", logging.INFO)
 
     def get_current_reading(self, src_id=None):
         reading = {}
@@ -18,6 +21,7 @@ class Heartbeat(Provider):
         reading["start_time"] = datetime.datetime.utcnow().isoformat()
         reading["reading"] = []
 
+        self.log_message("Generating counter", logging.DEBUG)
         reading["reading"].append({
             "name": "test",
             "units": "",
@@ -25,6 +29,7 @@ class Heartbeat(Provider):
             "reading": self._counter
         })
 
+        self.log_message("Generating random", logging.DEBUG)
         reading["reading"].append({
             "name": "test",
             "units": "",

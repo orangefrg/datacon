@@ -11,6 +11,9 @@ from data_collectors.sender import JSONSender
 from rmq_config import initial_config
 from apscheduler.schedulers.background import BackgroundScheduler
 import shared_config
+import logging
+
+logging.basicConfig(filename='datacon_main.log', level=logging.WARNING)
 
 initial_config()
 sch = BackgroundScheduler()
