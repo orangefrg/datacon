@@ -52,7 +52,7 @@ class Reading(models.Model):
     timestamp_packet = models.DateTimeField(verbose_name="Метка времени в пакете")
     timestamp_receive = models.DateTimeField(auto_now_add=True, verbose_name="Метка времени получения")
     time_to_obtain = models.FloatField(verbose_name="Время измерения")
-    error = models.ForeignKey(Error, null=True, verbose_name="Ошибка", on_delete=models.SET_NULL)
+    error = models.ForeignKey(Error, null=True, blank=True, verbose_name="Ошибка", on_delete=models.SET_NULL)
     class Meta:
         abstract = True
     def __str__(self):
@@ -85,16 +85,38 @@ class ReadingText(Reading):
 
 class AlertValues(models.Model):
     parameter = models.OneToOneField(DataTag, on_delete=models.CASCADE, verbose_name="Параметр", related_name="alert_values")
-    upper_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+    upper_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                        verbose_name="Верхняя нормативная граница", related_name="upper_boundary_of")
-    lower_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+    lower_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                        verbose_name="Нижняя нормативная граница", related_name="lower_boundary_of")
-    critical_upper_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+    critical_upper_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                                 verbose_name="Верхняя аварийная граница", related_name="critical_upper_boundary_of")
-    critical_lower_boundary = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+    critical_lower_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                                 verbose_name="Нижняя аварийная граница", related_name="critical_lower_boundary_of")
-    strict_equal_value = models.ForeignKey(DataTag, null=True, default=None, on_delete=models.CASCADE,
+    strict_equal_value = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                      verbose_name="Строгое нормативное значение", related_name="strict_equal_value_of")
+    class Meta:
+        ordering = ['parameter']
+        verbose_name = "Ограничения параметра"
+        verbose_name_plural = "Ограничения параметров"
+    def __str__(self):
+        out_str = self.parameter.get_full_name()
+        out_limits = []
+        if self.critical_lower_boundary is not None:
+            out_limits.append("CritLow")
+        if self.lower_boundary is not None:
+            out_limits.append("Low")
+        if self.strict_equal_value is not None:
+            out_limits.append("Strict")
+        if self.upper_boundary is not None:
+            out_limits.append("High")
+        if self.critical_upper_boundary is not None:
+            out_limits.append("CritHigh")
+        if len(out_limits) > 0:
+            out_str += " ({})".format(", ".join(out_limits))
+        else:
+            out_str += " (no limits)"
+        return out_str
 
 class DataSet(models.Model):
     uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name="Идентификатор")

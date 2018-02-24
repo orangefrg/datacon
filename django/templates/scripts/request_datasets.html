@@ -10,6 +10,40 @@
         results.forEach(createOrUpdateWidget);
     };
 
+    function getTrend(readingValue, fieldName, pastTimeText) {
+        if (readingValue.hasOwnProperty(fieldName) && readingValue[fieldName] != null) {
+            if (readingValue[fieldName].hasOwnProperty("direction")) {
+                var out_str = "Значение ";
+                var outcome = "stable";
+                switch(readingValue[fieldName]["direction"]) {
+                    case "increase":
+                        out_str += "увеличивается ";
+                        outcome = "up";
+                        break;
+                    case "decrease":
+                        out_str += "уменьшается ";
+                        outcome = "down";
+                        break;
+                    case "stable":
+                        out_str += "стабильно ";
+                        outcome = "stable";
+                        break;
+                    default:
+                        out_str += "не имеет определимого тренда ";
+                        outcome = "unknown";
+                        break;
+                }
+                out_str += "за " + pastTimeText;
+                var out_obj = {
+                    str: out_str,
+                    dir: outcome
+                }
+                return out_obj;
+            }
+        }
+        return null;
+    };
+
     function createWidget(widget_name) {
         var card_wrapper = document.createElement("div");
         card_wrapper.setAttribute("class", "col-12 col-md-6 col-lg-4 mt-4");
@@ -23,18 +57,33 @@
         tag_label.setAttribute("class", "card-title data-tag-name");
         body_div.appendChild(tag_label);
         var value_label = document.createElement("label");
-        value_label.setAttribute("class", "card-text display-3 data-tag-value");
+        value_label.setAttribute("class", "card-text display-4 data-tag-value");
         body_div.appendChild(value_label);
+        var additional_info = document.createElement("div");
+        additional_info.setAttribute("class", "list-group list-flush");
+        var trend_3h_wrapper = document.createElement("li");
+        var trend_3h = document.createElement("small");
+        trend_3h_wrapper.setAttribute("class", "list-group-item");
+        trend_3h.setAttribute("class", "text-muted data-tag-trend-3h");
+        var trend_24h_wrapper = document.createElement("li");
+        var trend_24h = document.createElement("small");
+        trend_3h_wrapper.appendChild(trend_3h);
+        additional_info.appendChild(trend_3h_wrapper);
+        trend_24h_wrapper.setAttribute("class", "list-group-item");
+        trend_24h.setAttribute("class", "text-muted data-tag-trend-24h");
+        trend_24h_wrapper.appendChild(trend_24h);
+        additional_info.appendChild(trend_24h_wrapper);
         var timestamp_label = document.createElement("p");
-        timestamp_label.setAttribute("class", "card-text");
+        timestamp_label.setAttribute("class", "card-footer");
         var timestamp_small = document.createElement("small");
         timestamp_small.setAttribute("class", "text-muted data-tag-timestamp");
         timestamp_label.appendChild(timestamp_small);
-        body_div.appendChild(timestamp_label);
+        card.appendChild(additional_info);
+        card.appendChild(timestamp_label);
         card_wrapper.appendChild(card);
         var main_container = $( "#main-container" ).append(card_wrapper);
         return card;
-    }
+    };
 
     function createOrUpdateWidget(result) {
         var widget_name = result.name;
@@ -48,5 +97,13 @@
         $( current_widget ).find(".data-tag-name").text(widget_display_name);
         $( current_widget ).find(".data-tag-value").text(reading_value);
         $( current_widget ).find(".data-tag-timestamp").text(getTimeFromNow(reading_timestamp));
-    }
+        var tr3h = getTrend(result.reading[0], "trend_3h", "последние 3 часа");
+        var tr24h = getTrend(result.reading[0], "trend_24h", "последние сутки");
+        if(tr3h != null) {
+            $( current_widget ).find(".data-tag-trend-3h").text(tr3h.str);
+        };
+        if(tr24h != null) {
+            $( current_widget ).find(".data-tag-trend-24h").text(tr24h.str);
+        };
+    };
 </script>
