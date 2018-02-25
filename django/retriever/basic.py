@@ -56,16 +56,20 @@ def get_latest_valid_value(dtag, round_numerics=None, date_end=None, check_alert
             need_round = False
     except:
         latest_text = None
-    limits = get_tag_limits(latest)
-    trend_3h = get_trend_by_timedelta(latest, timedelta(hours=3))
-    trend_24h = get_trend_by_timedelta(latest, timedelta(days=1))
-    latest = {"reading": latest.reading if not need_round or latest.reading is None else round(latest.reading, round_numerics),
-              "timestamp_packet": latest.timestamp_packet,
-              "timestamp_receive": latest.timestamp_receive,
-              "time_to_obtain": latest.time_to_obtain,
-              "limits": limits,
-              "trend_3h": trend_3h,
-              "trend_24h": trend_24h}
+    if latest is not None:
+        limits = get_tag_limits(latest)
+        trend_3h = get_trend_by_timedelta(latest, timedelta(hours=3))
+        trend_24h = get_trend_by_timedelta(latest, timedelta(days=1))
+        latest = {"reading": latest.reading if not need_round or latest.reading is None else round(latest.reading, round_numerics),
+                "timestamp_packet": latest.timestamp_packet,
+                "timestamp_receive": latest.timestamp_receive,
+                "time_to_obtain": latest.time_to_obtain,
+                "limits": limits,
+                "trend_3h": trend_3h,
+                "trend_24h": trend_24h}
+    else: 
+        latest = {"reading": None,
+                  "error": "No data"}
     return latest
 
 def get_range_valid_values(dtag, date_start, date_end=datetime.now(), round_numerics=None):
