@@ -50,14 +50,16 @@ class Collector:
         self.log_message("Message received: {}".format(body), logging.DEBUG) 
         if self.upload_data(body):
             ch.basic_ack(delivery_tag = method.delivery_tag)
+        else:
+            ch.basic_reject(delivery_tag = method.delivery_tag, requeue = True)
 
     def _on_declare_queue(self, queue):
         self.log_message("Queue OK", logging.DEBUG) 
         self._channel.basic_qos(prefetch_count=1)
         for k in self._routing_keys:
             self.log_message("Binding {}".format(k), logging.DEBUG) 
-            self._channel.queue_bind(None, "{}.collectq".format(self._name), DEFAULT_EXCHANGE, "{}.collect".format(k), nowait=True)
-            self._channel.queue_bind(None, "{}.collectq".format(self._name), DEFAULT_EXCHANGE, "{}.all".format(k), nowait=True)
+            self._channel.queue_bind(None, self._queue_name, DEFAULT_EXCHANGE, "{}.collect".format(k), nowait=True)
+            self._channel.queue_bind(None, self._queue_name, DEFAULT_EXCHANGE, "{}.all".format(k), nowait=True)
             self.log_message("Binding {} OK".format(k), logging.DEBUG) 
         self.log_message("Connection and setting of AMQP OK", logging.INFO) 
         self._consumer_tag = self._channel.basic_consume(self._receive_callback)
@@ -66,7 +68,7 @@ class Collector:
         self.log_message("Channel OK", logging.DEBUG)
         self._channel = channel
         self.log_message("Declaring or checking queue", logging.DEBUG)
-        self._channel.queue_declare(self._on_declare_queue, queue="{}.collectq".format(self._name), durable=True)
+        self._channel.queue_declare(self._on_declare_queue, queue=self._queue_name, durable=True)
 
     def _on_open_connection(self, connection):
         self.log_message("Connection OK", logging.DEBUG)
@@ -86,7 +88,7 @@ class Collector:
     # If no routing keys are provided, EVERY message ending with ".collect" will be accepted
     # Queues are declared automatically, as well as bindings
     # Be sure to remove abandoned ones
-    def __init__(self, name, description, routing_keys=[], amqp=True, loglevel=logging.DEBUG):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], amqp=True, loglevel=logging.DEBUG):
         self._name = name
         self._loglevel = loglevel
         self._description = description
@@ -99,6 +101,7 @@ class Collector:
                     10: (self._logger.debug, "Debug")}
         self._logger.info("{} is being initialized".format(self._name))
         if amqp:
+            self._queue_name = "{}.collectq".format(name) if queue_name_prefix is None else "{}.collectq".format(queue_name_prefix)
             self._consumer_tag = ""
             self._routing_keys = ["*"] if routing_keys is None or len(routing_keys) == 0 else routing_keys
             self._ct = CollectorThread(self)

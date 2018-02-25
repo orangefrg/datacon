@@ -29,9 +29,9 @@ HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, publish_routi
 HB = Heartbeat("Heartbeat", "Data provider for test purposes", sch, publish_routing_key="all.collect")
 
 DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
-ORANGE.set_polling({"cron": {"minute": "1-51/10"}})
+ORANGE.set_polling({"cron": {"minute": "0-50/10"}})
 HTU.set_polling({"cron": {"minute": "0-50/10"}})
-HB.set_polling({"cron": {"minute": "2-52/10"}})
+HB.set_polling({"cron": {"minute": "0-50/10"}})
 
 DALLAS.activate_polling()
 ORANGE.activate_polling()
@@ -39,7 +39,9 @@ HTU.activate_polling()
 HB.activate_polling()
 
 # PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
-SENDER = JSONSender("json-sender", "Simple JSON HTTP(S) sender", ["all", "sender"], address=shared_config.URL_TO_SEND)
+senders = []
+for i in range(10):
+        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"], address=shared_config.URL_TO_SEND))
 # WRITER = SimpleFileWrite("writer", "Deafult file writer", ["all", "writer"], False, "test_with_rabbit")
 
 # DALLAS.set_polling({"cron": {"minute": "0-50/10"}}, [WRITER, PRINTER])

@@ -4,12 +4,14 @@ import requests
 import logging
 import traceback
 import sys
+import threading
 
 class JSONSender(Collector):
 
-    def __init__(self, name, description, routing_keys=[], amqp=True, loglevel=logging.DEBUG, address="http://127.0.0.1"):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], amqp=True, loglevel=logging.DEBUG, address="http://127.0.0.1"):
         self._address = address
-        super().__init__(name, description, routing_keys, amqp, loglevel)
+        self._threads = []
+        super().__init__(name, description, queue_name_prefix, routing_keys, amqp, loglevel)     
 
     def upload_data(self, data):
         self.log_message("Trying to upload: {}".format(data), logging.DEBUG) 

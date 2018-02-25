@@ -172,16 +172,12 @@ class HTU21D(Provider):
 
     def get_current_reading(self, src_id=None):
         self.log_message("Reading values via I2C bus",logging.DEBUG)     
-        reading = {}
-        reading["name"] = self._name
-        reading["start_time"] = datetime.datetime.utcnow().isoformat()
-        reading["reading"] = []
+        reading = []
         temp = self._get_temperature()
         hum = self._get_humidity()
         heater = self._get_heater()
         dewpoint = self._get_dewpoint()
         self.log_message("Checking dewpoint",logging.DEBUG)    
         self._heater_control()
-        reading["reading"] = [temp, hum, heater, dewpoint]
-        reading["end_time"] = datetime.datetime.utcnow().isoformat()
+        reading = [temp, hum, heater, dewpoint]
         return reading

@@ -49,11 +49,7 @@ class Ds18b20(Provider):
 
     def get_current_reading(self, src_id=None):
         self.log_message("Querying sensors via 1-wire bus", logging.DEBUG)
-        reading = {}
-        reading["name"] = self._name
-        reading["start_time"] = datetime.datetime.utcnow().isoformat()
-        reading["reading"] = []
-
+        reading = []
         for s in self._sensors:
             try:
                 current = {}
@@ -82,9 +78,8 @@ class Ds18b20(Provider):
                     current["reading"] = temp
                     current["units"] = "°C"
                     current["measured_parameter"] = "temperature"
-                reading["reading"].append(current)
+                reading.append(current)
             except:
-                self.log_message("Error querying sensors: {}".format(sys.exc_info()[0]), logging.ERROR)
-        reading["end_time"] = datetime.datetime.utcnow().isoformat()
+                self.log_message("Error querying sensors: {}".format(sys.exc_info()[0]), logging.ERROR)   
         return reading
 

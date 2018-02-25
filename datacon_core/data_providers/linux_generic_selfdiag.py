@@ -3,24 +3,22 @@ import re, os, logging, psutil, sys, socket
 
 class LinuxSelfDiagProto(Provider):
 
-    root_partition = "/"
-
     def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
                  command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
         super().__init__(name, description, scheduler, amqp, publish_routing_key,
                          command_routing_keys, pass_to, loglevel)
 
-    def _get_free_space(self):
+    def _get_free_space(self, path="/"):
         res_list = []
         self.log_message("Getting free space on disk", logging.DEBUG)
-        f_gb = {"name": "/",
+        f_gb = {"name": path,
                 "units": "Mb",
                 "measured_parameter": "free"}
-        t_gb = {"name": "/",
+        t_gb = {"name": path,
                 "units": "Mb",
                 "measured_parameter": "total"}
         try:
-            p = psutil.disk_usage(self.root_partition)
+            p = psutil.disk_usage(path)
             free_gb = (p.total - p.used) / 1048576.0
             total_gb = p.total / 1048576.0
             f_gb["reading"] = free_gb
@@ -97,12 +95,13 @@ class LinuxSelfDiagProto(Provider):
                 "units": "°C",
                 "measured_parameter": "temperature"}
         try:
-            tmp_value = psutil.sensors_temperatures()[sensor_id].current
+            tmp_value = psutil.sensors_temperatures()[sensor_id][0].current
             tmp["reading"] = tmp_value
         except:
             self.log_message("Could not get {} temperature: {}".format(sensor_name, sys.exc_info()[0]), logging.ERROR)
             tmp["error"] = "Reading error"
         res_list.append(tmp)
+        return res_list
 
     def _get_net_stats(self, if_id, if_name=None, get_bytes=True, get_errors=True):
         res_list = []
@@ -111,10 +110,10 @@ class LinuxSelfDiagProto(Provider):
         self.log_message("Getting network interface {} statistics".format(if_name), logging.DEBUG)
         if get_bytes:
             bytes_rx = { "name": "Network.{}".format(if_name),
-                    "units": "b",
+                    "units": "Mb",
                     "measured_parameter": "traffic_in"}
             bytes_tx = { "name": "Network.{}".format(if_name),
-                    "units": "b",
+                    "units": "Mb",
                     "measured_parameter": "traffic_out"}
             res_list.append(bytes_rx)
             res_list.append(bytes_tx)
@@ -159,8 +158,8 @@ class LinuxSelfDiagProto(Provider):
                         for t in [bytes_rx, bytes_tx]:
                             t["error"] = "Interface not found"
                             res_list.append(t)
-                    bytes_rx["reading"] = stats[if_id].bytes_recv
-                    bytes_tx["reading"] = stats[if_id].bytes_sent
+                    bytes_rx["reading"] = stats[if_id].bytes_recv / 1048576.0
+                    bytes_tx["reading"] = stats[if_id].bytes_sent / 1048576.0
                 except:
                     for t in [bytes_rx, bytes_tx]:
                         t["error"] = "Error getting stats"

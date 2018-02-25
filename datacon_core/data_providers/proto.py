@@ -103,14 +103,16 @@ class Provider:
 
     def _poll_current_reading(self):
         self.log_message("Time to get data and send it", logging.DEBUG)
-        current_data = json.dumps(self.get_current_reading())
+        current_rdg = self._start_message()
+        current_rdg["reading"].extend(self.get_current_reading())
+        current_data = json.dumps(self._finalize_message(current_rdg))
         if not self._invalid_config and self._pass_to is None:
             self.log_message("Revoking channel", logging.DEBUG)
             self._revoke_channel()
             self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, current_data)
             self._connection.close()
         else:
-            self.log_message("Sending in simple way")
+            self.log_message("Sending in simple way", logging.DEBUG)
             for collector in self._pass_to:
                 collector.upload_data(current_data)
 

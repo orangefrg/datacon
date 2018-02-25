@@ -15,9 +15,10 @@ class OrangePiSelfDiag(LinuxSelfDiagProto):
 # Overriding defaults
 
     def get_current_reading(self, src_id=None):
-        reading = self._start_message()
-        reading["reading"].extend(self._get_cpu_usage())
-        reading["reading"].extend(self._get_temperature("iio_hwmon", "SoC"))
-        reading["reading"].extend(self._get_free_space())
-        reading["reading"].extend(self._get_ram_usage())
-        return self._finalize_message(reading)
+        reading = []
+        reading.extend(self._get_cpu_usage())
+        reading.extend(self._get_cpu_frequency())
+        reading.extend(self._get_temperature("iio_hwmon", "SoC"))
+        reading.extend(self._get_free_space())
+        reading.extend(self._get_ram_usage())
+        return reading

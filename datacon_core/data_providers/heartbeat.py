@@ -16,13 +16,10 @@ class Heartbeat(Provider):
         self.log_message("Starting heartbeat", logging.INFO)
 
     def get_current_reading(self, src_id=None):
-        reading = {}
-        reading["name"] = self._name
-        reading["start_time"] = datetime.datetime.utcnow().isoformat()
-        reading["reading"] = []
+        reading = []
 
         self.log_message("Generating counter", logging.DEBUG)
-        reading["reading"].append({
+        reading.append({
             "name": "test",
             "units": "",
             "measured_parameter": "counter",
@@ -30,7 +27,7 @@ class Heartbeat(Provider):
         })
 
         self.log_message("Generating random", logging.DEBUG)
-        reading["reading"].append({
+        reading.append({
             "name": "test",
             "units": "",
             "measured_parameter": "random",
@@ -45,6 +42,4 @@ class Heartbeat(Provider):
             self._counter += 1
         else:
             self._counter -=1
-
-        reading["end_time"] = datetime.datetime.utcnow().isoformat()
         return reading
