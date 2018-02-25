@@ -76,6 +76,19 @@ class Provider:
     def get_description(self):
         return self._description
 
+    # Make message prototype with measurement start time, module name and readings list
+    def _start_message(self):
+        message = {}
+        message["name"] = self._name
+        message["start_time"] = datetime.utcnow().isoformat()
+        message["reading"] = []
+        return message
+
+    # Add measurement finish time to message
+    def _finalize_message(self, message):
+        message["end_time"] = datetime.utcnow().isoformat()
+        return message
+
     # Current reading should be a dictionary:
     # name - provider name
     # start_time, end_time - UTC times of start and end of measurement

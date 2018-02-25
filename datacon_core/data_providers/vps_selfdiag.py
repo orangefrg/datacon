@@ -1,9 +1,7 @@
 from .linux_generic_selfdiag import LinuxSelfDiagProto
-import sys, re, os, psutil
 from datetime import datetime
-import logging
 
-class OrangePiSelfDiag(LinuxSelfDiagProto):
+class VPSSelfDiag(LinuxSelfDiagProto):
 
     def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
                  command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
@@ -15,9 +13,16 @@ class OrangePiSelfDiag(LinuxSelfDiagProto):
 # Overriding defaults
 
     def get_current_reading(self, src_id=None):
-        reading = self._start_message()
-        reading["reading"].extend(self._get_cpu_usage())
-        reading["reading"].extend(self._get_temperature("iio_hwmon", "SoC"))
-        reading["reading"].extend(self._get_free_space())
-        reading["reading"].extend(self._get_ram_usage())
-        return self._finalize_message(reading)
+        reading = {}
+        reading["name"] = self._name
+        reading["start_time"] = datetime.datetime.utcnow().isoformat()
+
+        rdng = []
+        rdng = self._get_cpu_usage(rdng)
+        rdng = self._get_temperature(rdng, "iio_hwmon", "SoC")
+        rdng = self._get_free_space(rdng)
+        rdng = self._get_ram_usage(rdng)
+        reading["reading"] = rdng
+                 
+        reading["end_time"] = datetime.datetime.utcnow().isoformat()
+        return reading
