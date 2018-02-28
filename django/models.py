@@ -94,7 +94,7 @@ class AlertValues(models.Model):
     critical_lower_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                                 verbose_name="Нижняя аварийная граница", related_name="critical_lower_boundary_of")
     strict_equal_value = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
-                                     verbose_name="Строгое нормативное значение", related_name="strict_equal_value_of")
+                                     verbosk["time_back_ago"]e_name="Строгое нормативное значение", related_name="strict_equal_value_of")
     class Meta:
         ordering = ['parameter']
         verbose_name = "Ограничения параметра"
@@ -130,3 +130,25 @@ class DataSet(models.Model):
     def __str__(self):
         return "{} - {} ({} {}), {} тэгов".format(self.name, self.uid, self.user.first_name, self.user.last_name,
                                                   self.tags.count())
+
+class ReductionByTime(models.Model):
+    tags = models.ManyToManyField(DataTag, verbose_name="Тэги")
+    time_back_ago = models.FloatField(verbose_name="Возраст данных для редукции")
+    minimum_timespan = models.FloatField(verbose_name="Минимальный интервал между данными")
+    class Meta:
+        verbose_name = "Редукция по времени"
+        verbose_name_plural = "Правила редукции по времени"
+
+class ReductionByDelta(models.Model):
+    tags = models.ManyToManyField(DataTag, verbose_name="Тэги")
+    time_back_ago = models.FloatField(verbose_name="Возраст данных для редукции")
+    minimum_delta = models.FloatField(verbose_name="Минимальная разница в значении параметра")
+    class Meta:
+        verbose_name = "Редукция по пороговому значению"
+        verbose_name_plural = "Правила редукции по пороговому значению"
+
+class ReductionByDuplicates(models.Model):
+    tags = models.ManyToManyField(DataTag, verbose_name="Тэги")
+    class Meta:
+        verbose_name = "Редукция по дубликатам"
+        verbose_name_plural = "Правила редукции по дубликатам"
