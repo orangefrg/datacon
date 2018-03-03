@@ -1,0 +1,47 @@
+<template id="datatag-widget">
+    <div class="card"
+        v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
+        <div class="card-body"
+            v-bind:class="rdg.alert_state != null ? 'text-' + rdg.alert_state : ''">
+            <h5 class="card-title data-tag-name">(( rdg.display_name ))</h5>
+            <label class="card-text display-4 data-tag-value"
+                v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '2rem' : '2.5rem' : fontSize}">
+                (( rdg.display_reading ))
+            </label>
+            <span class="oi oi-arrow-bottom" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                v-bind:title="rdg.display_trend_3h"
+                v-if="rdg.trend_display=='dec_3'"
+                v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+            <span class="oi oi-arrow-thick-bottom" data-toggle="tooltip" data-placement="bottom" data-html="true"
+            v-bind:title="rdg.display_trend_24h"
+                v-if="rdg.trend_display=='dec_all'"
+                v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+            <span class="oi oi-arrow-top" data-toggle="tooltip" data-placement="bottom" data-html="true"
+            v-bind:title="rdg.display_trend_3h"
+                v-if="rdg.trend_display=='inc_3'"
+                v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+            <span class="oi oi-arrow-thick-top" data-toggle="tooltip" data-placement="bottom" data-html="true"
+            v-bind:title="rdg.display_trend_24h"
+                v-if="rdg.trend_display=='inc_all'"
+                v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+            <span class="oi oi-minus" data-toggle="tooltip" data-placement="bottom" data-html="true"
+            v-bind:title="rdg.display_trend_3h"
+                    v-if="rdg.trend_display=='stab_3'"
+                    v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+            <span class="oi oi-minus" data-toggle="tooltip" data-placement="bottom" data-html="true"
+            v-bind:title="rdg.display_trend_24h"
+                        v-if="rdg.trend_display=='stab_all'"
+                        v-bind:style="{fontSize: rdg.display_reading.length > 9 ? rdg.display_reading.length > 15 ? '1.25rem' : '2rem' : '2.5rem'}"
+                ></span>
+        </div>
+        <div class="card-footer"
+        v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
+            <small class="text-muted data-tag-timestamp">(( rdg.updated ))</small>
+        </div>
+    </div>
+</template>

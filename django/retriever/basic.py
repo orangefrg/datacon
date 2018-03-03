@@ -4,34 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from datacon.analysis.trends import get_trend_by_timedelta
 import math
 
-def get_tag_value_test(dsource_name, dtag, description):
-    ds = DataSource.objects.get(name=dsource_name)
-    dtag = DataTag.objects.get(source=ds, name=dtag)
-    now = datetime.utcnow()
-    try:
-        latest = ReadingNumeric.objects.filter(error=None, tag=dtag).latest('timestamp_packet')
-        val = round(latest.reading, 2)
-    except:
-        latest = None
-    try:
-        latest_discrete = ReadingDiscrete.objects.filter(error=None, tag=dtag).latest('timestamp_packet')
-        if latest is not None and latest_discrete.timestamp_packet > latest.timestamp_packet:
-            latest = latest_discrete
-            val = latest.reading
-    except:
-        latest_discrete = None
-    try:
-        latest_text = ReadingText.objects.filter(error=None, tag=dtag).latest('timestamp_packet')
-        if latest is not None and latest_discrete.timestamp_packet > latest.timestamp_packet:
-            latest = latest_discrete
-            val = latest.reading
-    except:
-        latest_text = None
-    age = now - latest.timestamp_packet.replace(tzinfo=None)
-    mins = int(age.total_seconds())//60
-    out_str = "{}: {}{} ({} минут назад)".format(description, val, latest.tag.units, mins)
-    return out_str
-
 def get_latest_valid_value(dtag, round_numerics=None, date_end=None, check_alerts=True):
     need_round = False
     kw = {"error": None, "tag": dtag}
@@ -186,7 +158,12 @@ def get_dataset_range(dataset_id, date_start, date_end=datetime.now(), round_num
 
 def get_tag_limits(reading):
     tag = reading.tag
-    if hasattr(reading, "alert_values"):
+    c_up = None
+    n_up = None
+    strict = None
+    n_dn = None
+    c_dn = None
+    if hasattr(tag, "alert_values"):
         limits = {}
         if reading.__class__ in [ReadingDiscrete, ReadingNumeric]:
             if tag.alert_values.strict_equal_value is not None:
@@ -202,61 +179,53 @@ def get_tag_limits(reading):
                 limits["strict"] = limit
 
             if reading.__class__ == ReadingNumeric:
-                if tag.alert_values.upper_boundary is not None:
-                    up = get_latest_valid_value(tag.alert_values.upper_boundary, date_end=reading.timestamp_packet, check_alerts=False)
-                    limit = {"reading": up["reading"]}
-                    if isinstance(up["reading"], float):
-                        if reading.reading > up["reading"]:
-                            limit["status"] = "out"
-                        elif reading.reading == up["reading"]:
-                            limit["status"] = "marginal"
+                for lm in [(tag.alert_values.upper_boundary, "upper"),
+                           (tag.alert_values.critical_upper_boundary, "upper_critical")]:
+                    if lm[0] is not None:
+                        up = get_latest_valid_value(lm[0], date_end=reading.timestamp_packet, check_alerts=False)
+                        limit = {"reading": up["reading"]}
+                        if isinstance(up["reading"], float):
+                            if reading.reading > up["reading"]:
+                                limit["status"] = "out"
+                            elif reading.reading == up["reading"]:
+                                limit["status"] = "marginal"
+                            else:
+                                limit["status"] = "in"
                         else:
-                            limit["status"] = "in"
-                    else:
-                        limit["error"] = "Wrong type for limit"
-                    limits["upper"] = limit
-
-                if tag.alert_values.critical_upper_boundary is not None:
-                    up = get_latest_valid_value(tag.alert_values.critical_upper_boundary, date_end=reading.timestamp_packet, check_alerts=False)
-                    limit = {"reading": up["reading"]}
-                    if isinstance(up["reading"], float):
-                        if reading.reading > up["reading"]:
-                            limit["status"] = "out"
-                        elif reading.reading == up["reading"]:
-                            limit["status"] = "marginal"
+                            limit["error"] = "Wrong type for limit"
+                        limits[lm[1]] = limit
+                
+                for lm in [(tag.alert_values.lower_boundary, "lower"),
+                           (tag.alert_values.critical_lower_boundary, "lower_critical")]:
+                    if lm[0] is not None:
+                        up = get_latest_valid_value(lm[0], date_end=reading.timestamp_packet, check_alerts=False)
+                        limit = {"reading": up["reading"]}
+                        if isinstance(up["reading"], float):
+                            if reading.reading < up["reading"]:
+                                limit["status"] = "out"
+                            elif reading.reading == up["reading"]:
+                                limit["status"] = "marginal"
+                            else:
+                                limit["status"] = "in"
                         else:
-                            limit["status"] = "in"
-                    else:
-                        limit["error"] = "Wrong type for limit"
-                    limits["upper_critical"] = limit
-                    
-                if tag.alert_values.lower_boundary is not None:
-                    up = get_latest_valid_value(tag.alert_values.lower_boundary, date_end=reading.timestamp_packet, check_alerts=False)
-                    limit = {"reading": up["reading"]}
-                    if isinstance(up["reading"], float):
-                        if reading.reading > up["reading"]:
-                            limit["status"] = "out"
-                        elif reading.reading == up["reading"]:
-                            limit["status"] = "marginal"
-                        else:
-                            limit["status"] = "in"
-                    else:
-                        limit["error"] = "Wrong type for limit"
-                    limits["lower"] = limit
-                    
-                if tag.alert_values.critical_lower_boundary is not None:
-                    up = get_latest_valid_value(tag.alert_values.critical_lower_boundary, date_end=reading.timestamp_packet, check_alerts=False)
-                    limit = {"reading": up["reading"]}
-                    if isinstance(up["reading"], float):
-                        if reading.reading > up["reading"]:
-                            limit["status"] = "out"
-                        elif reading.reading == up["reading"]:
-                            limit["status"] = "marginal"
-                        else:
-                            limit["status"] = "in"
-                    else:
-                        limit["error"] = "Wrong type for limit"
-                    limits["lower_critical"] = limit
-
+                            limit["error"] = "Wrong type for limit"
+                        limits[lm[1]] = limit
+        c_up = limits["upper"]["status"] if "upper" in limits else None
+        n_up = limits["upper_critical"]["status"] if "upper_critical" in limits else None
+        n_dn = limits["lower"]["status"] if "lower" in limits else None
+        c_dn = limits["lower_critical"]["status"] if "lower_critical" in limits else None
+        strict = limits["strict"]["status"] if "strict" in limits else None
+        res = "normal"
+        if c_up == "out":
+            res = "very_high"
+        elif c_dn == "out":
+            res = "very_low"
+        elif strict == "out":
+            res = "abnormal"
+        elif n_up == "out":
+            res = "high"
+        elif n_dn == "out":
+            res = "low"
+        limits["result"] = res
         return limits
     return None

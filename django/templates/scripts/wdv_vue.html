@@ -1,0 +1,106 @@
+<script>
+    // Helpers
+    var csrftoken;
+    var dataset_id;
+    var trendDict = {
+        increase: "Значение увеличивается",
+        decrease: "Значение уменьшается",
+        stable: "Значение стабильно"
+    }
+    function obtainDataSetID() {
+        dataset_id = $( "#dataSetID" ).val();
+    };
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    };
+    function requestData() {
+        $.post("/datacon/display/" + dataset_id, processData);
+    };
+    function processData(response, status) {
+        if (status != "success") {
+            return;
+        }
+        var results = response.results;
+        for(i=0;i<results.length;i++) {
+            results[i] = processResult(results[i], i);
+        };
+        received_data.tags = results;
+    };
+    function processResult(result, id) {
+        var latest = result.reading[0];
+        result.display_reading = latest.reading + " " + result.units;
+        if (latest.trend_3h != null && latest.trend_24h != null) {
+            result.display_trend_3h = trendDict[latest.trend_3h.direction] + " за последние 3 часа";
+            result.display_trend_24h = trendDict[latest.trend_24h.direction] + " за последние сутки";
+            if(latest.trend_3h.direction == "increase") {
+                if(latest.trend_24h.direction == "increase") {
+                    result.trend_display = "inc_all";
+                }
+                else {
+                    result.trend_display = "inc_3";
+                }
+            }
+            else if(latest.trend_3h.direction == "decrease") {
+                if(latest.trend_24h.direction == "decrease") {
+                    result.trend_display = "dec_all";
+                }
+                else {
+                    result.trend_display = "dec_3";
+                }
+            }
+            else if(latest.trend_3h.direction == "stable") {
+                if(latest.trend_24h.direction == "stable") {
+                    result.trend_display = "stab_all";
+                }
+                else {
+                    result.trend_display = "stab_3";
+                }
+            }
+        }
+        result.updated = getTimeFromNow(latest.timestamp_packet);
+        result.id = id;
+        if(latest.limits != null) {
+            result.alert_value = latest.limits.result;
+            if(latest.limits.result == "very_high" || latest.limits.result == "very_low") {
+                result.alert_state = "danger";
+            }
+            else if(latest.limits.result != "normal") {
+                result.alert_state = "warning";
+            }
+        }
+        return result;
+    };
+
+    // VUE.js
+
+    var received_data = {
+        tags: []
+    }
+
+    Vue.component('datatag-item', {
+        props: ['rdg'],
+        template: "#datatag-widget",
+        delimiters: ["((", "))"]
+        });
+
+    var app = new Vue({
+        el: '#main-app',
+        data: received_data
+    });
+
+    // Document readiness handler
+    $( document ).ready(function() {
+        csrftoken = Cookies.get('csrftoken');
+        obtainDataSetID();
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        requestData();
+        setInterval(requestData, 30000);
+    });
+</script>

@@ -6,6 +6,18 @@
                         parseInt(date_components[3]),parseInt(date_components[4]),parseInt(date_components[5]));
     }
 
+    function getCorrectEnding(value_input) {
+        var val = Math.abs(value_input);
+        if(val==1 || (val % 100 > 20 && val % 10 == 1)) {
+            return 0;
+        }
+        var endingGroup2 = [2, 3, 4];
+        if(endingGroup2.includes(val) || (val % 100 > 20 && endingGroup2.includes(val % 10))) {
+            return 1;
+        }
+        return 2;
+    }
+
     function getTimeFromNow(iso_string) {
         var inputDate = getDateFromISO(iso_string);
         var elapsed_minutes_total = parseInt((Date.now() - inputDate) / 1000 / 60);
@@ -20,10 +32,32 @@
         }
         else {
             if (elapsed_hours > 0) {
-                out_str += elapsed_hours + " часов ";
+                out_str += elapsed_hours;
+                switch(getCorrectEnding(elapsed_hours)) {
+                    case 0:
+                        out_str += " час ";
+                        break;
+                    case 1:
+                        out_str += " часа ";
+                        break;
+                    default:
+                        out_str += " часов ";
+                        break;
+                }
             }
             if (elapsed_minutes > 0) {
-                out_str += elapsed_minutes + " минут ";
+                out_str += elapsed_minutes;
+                switch(getCorrectEnding(elapsed_minutes)) {
+                    case 0:
+                        out_str += " минуту ";
+                        break;
+                    case 1:
+                        out_str += " минуты ";
+                        break;
+                    default:
+                        out_str += " минут ";
+                        break;
+                }
             }
             out_str = "Обновлено " + out_str + "назад";
         }
