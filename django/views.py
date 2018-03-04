@@ -3,8 +3,7 @@ from django.template import loader
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .receiver.receiver import debug_print, process_message
-from .retriever.basic import get_dataset_latest, get_dataset_range
-from .retriever.request_processor import retriever_worker
+from .retriever.request_processor import retriever_worker, get_dataset_latest, get_dataset_range
 from datetime import datetime
 
 import json
