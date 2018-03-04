@@ -95,6 +95,7 @@ class AlertValues(models.Model):
                                                 verbose_name="Нижняя аварийная граница", related_name="critical_lower_boundary_of")
     strict_equal_value = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                      verbosk["time_back_ago"]e_name="Строгое нормативное значение", related_name="strict_equal_value_of")
+
     class Meta:
         ordering = ['parameter']
         verbose_name = "Ограничения параметра"
@@ -152,3 +153,5 @@ class ReductionByDuplicates(models.Model):
     class Meta:
         verbose_name = "Редукция по дубликатам"
         verbose_name_plural = "Правила редукции по дубликатам"
+
+# TODO: input filtering

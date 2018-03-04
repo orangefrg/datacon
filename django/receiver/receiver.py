@@ -55,3 +55,5 @@ def write_reading(datasource, message_as_dict):
         rdg = rdg_base.create(tag=current_tag_db, timestamp_packet=t_packet_e, time_to_obtain=tto,
                                 error=error, reading=parsed_val)
     return (200, "Message received")
+
+# TODO: Input filters (as for base optimization schemes)
