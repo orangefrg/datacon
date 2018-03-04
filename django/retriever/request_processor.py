@@ -1,7 +1,59 @@
-from .basic import get_dataset_latest, get_dataset_range, get_latest_valid_tag, get_range_valid_tag
+from .basic import get_latest_valid_tag, get_range_valid_tag, get_latest_valid_value, get_range_valid_values
 from datetime import datetime
 import json
 from uuid import UUID
+from django.core.exceptions import ObjectDoesNotExist
+from datacon.models import DataSource, DataTag, DataSet, Error, ReadingNumeric, ReadingDiscrete, ReadingText
+
+
+def get_dataset_latest(dataset_id, round_numerics=None):
+    try:
+        ds = DataSet.objects.get(uid=dataset_id)
+    except ObjectDoesNotExist:
+        return {"error": {
+                    "code": 400,
+                    "reason": "Corresponding object not found"
+                    }
+                }
+    out_obj = {"results": []}
+    for t in ds.tags.all():
+        t_result = {}
+        t_result["name"] = t.get_full_name()
+        t_result["display_name"] = t.display_name
+        t_val = get_latest_valid_value(t, round_numerics)
+        t_result["reading"] = []
+        t_result["units"] = t.units
+        if t_val is not None:
+            t_result["reading"].append(t_val)
+        else:
+            t_result["error"] = "No data"
+        out_obj["results"].append(t_result)
+    return out_obj
+
+def get_dataset_range(dataset_id, date_start, date_end=datetime.now(), round_numerics=None):
+    try:
+        ds = DataSet.objects.get(uid=dataset_id)
+    except ObjectDoesNotExist:
+        return {"error": {
+                    "code": 400,
+                    "reason": "Corresponding object not found"
+                    }
+                }
+    out_obj = {"results": []}
+    for t in ds.tags.all():
+        t_result = {}
+        t_result["name"] = t.get_full_name()
+        t_result["display_name"] = t.display_name
+        t_vals = get_range_valid_values(t, date_start, date_end, round_numerics)
+        t_result["units"] = t.units
+        t_result["reading"] = []
+        if len(t_vals) > 0:
+            for v in t_vals:
+                t_result["reading"].append(v)
+        else:
+            t_result["error"] = "No data"
+        out_obj["results"].append(t_result)
+    return out_obj
 
 
 def retrieve_dataset(request):
