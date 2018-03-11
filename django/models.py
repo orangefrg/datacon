@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, AnonymousUser
+from django.core.exceptions import ObjectDoesNotExist
 import uuid
+from datetime import datetime
 
 # Create your models here.
 
@@ -46,13 +48,75 @@ class DataTag(models.Model):
         return "{}.{}".format(self.source.name, self.name)
 
     def __str__(self):
+        ret = ""
         if len(self.display_name) > 0:
-            return "{} ({})".format(self.display_name, self.get_full_name())
-        return self.get_full_name()
+            ret = "{} ({})".format(self.display_name, self.get_full_name())
+        else:
+            ret = self.get_full_name()
+        if self.ignore_duplicates:
+            ret += " (no dup)"
+        if self.filter_delta is not None:
+            ret += " (deadband {})".format(self.filter_delta.delta_value)
+        return ret
+
+    def latest_reading(self, only_valid=True):
+        kw = {
+            "tag": self
+        }
+        if only_valid:
+            kw["error"] = None
+        r_all = []
+        try:
+            r_all.append(ReadingNumeric.objects.filter(**kw).latest("timestamp_packet"))
+        except ObjectDoesNotExist:
+            pass
+        try:
+            r_all.append(ReadingDiscrete.objects.filter(**kw).latest("timestamp_packet"))
+        except ObjectDoesNotExist:
+            pass
+        try:
+            r_all.append(ReadingText.objects.filter(**kw).latest("timestamp_packet"))
+        except ObjectDoesNotExist:
+            pass
+        r_all = sorted(r_all, key=lambda k: k.timestamp_packet, reverse=True)
+        if len(r_all) == 0:
+            return None
+        else:
+            return r_all[0]
+        
+    def latest_n_readings(self, number=30, only_valid=True):
+        kw = {
+            "tag": self
+        }
+        if only_valid:
+            kw["error"] = None
+        r_all = list(ReadingNumeric.objects.filter(**kw).order_by("-timestamp_packet")[:number])
+        r_all.extend(list(ReadingDiscrete.objects.filter(**kw).order_by("-timestamp_packet")[:number]))
+        r_all.extend(list(ReadingText.objects.filter(**kw).order_by("-timestamp_packet")[:number]))
+        r_sorted = sorted(r_all, key=lambda k: k.timestamp_packet, reverse=True)[:number]
+        return r_sorted
+
+    def range_of_readings(self, date_start, date_end=None, max_number=None, only_valid=True):
+        kw = {
+            "tag": self,
+            "timestamp_packet__gte": date_start
+        }
+        if date_end is not None:
+            kw["timestamp_packet__lte"] = date_end
+        if only_valid:
+            kw["error"] = None
+        r_all = list(ReadingNumeric.objects.filter(**kw))
+        r_all.extend(list(ReadingDiscrete.objects.filter(**kw)))
+        r_all.extend(list(ReadingText.objects.filter(**kw)))
+        if max_number is None:
+            max_number = 100
+        r_sorted = sorted(r_all, key=lambda k: k.timestamp_packet, reverse=True)[:max_number]
+        return r_sorted
+
 
 class Error(models.Model):
     error = models.TextField(unique=True, verbose_name="Текст ошибки")
-    description = models.TextField(null=True, blank=True, default=None)
+    description = models.TextField(null=True, blank=True, default=None, verbose_name="Описание ошибки")
     class Meta:
         ordering = ['error']
         verbose_name = "Ошибка"

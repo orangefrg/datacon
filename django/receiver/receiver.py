@@ -26,6 +26,7 @@ def process_message(datasource, message):
 def write_reading(datasource, message_as_dict):
     tag_name = message_as_dict["name"]
     for r in message_as_dict["reading"]:
+        is_numeric = False
         current_tag = "{}.{}.{}".format(tag_name, r["name"], r["measured_parameter"])
         current_tag_db, was_new = DataTag.objects.get_or_create(source=datasource, name=current_tag)
         if was_new:
@@ -46,10 +47,12 @@ def write_reading(datasource, message_as_dict):
             try:
                 parsed_val = float(value)
                 rdg_base = ReadingNumeric.objects
+                is_numeric = True
             except ValueError:
                 try:
                     parsed_val = int(value)
                     rdg_base = ReadingNumeric.objects
+                    is_numeric = True
                 except ValueError:
                     parsed_val = value
                     rdg_base = ReadingText.objects
@@ -57,8 +60,9 @@ def write_reading(datasource, message_as_dict):
         t_packet_e = datetime.strptime(message_as_dict["end_time"], "%Y-%m-%dT%H:%M:%S.%f")
         latest = rdg_base.filter(tag=current_tag_db, error=None).latest("timestamp_packet")
         if latest.timestamp_packet.replace(tzinfo=None) < t_packet_e and \
-                ((current_tag_db.filter_delta is not None and current_tag_db.filter_delta.delta_value > parsed_val - latest.reading) or \
+                ((current_tag_db.filter_delta is not None and is_numeric and current_tag_db.filter_delta.delta_value > abs(parsed_val - latest.reading)) or \
                 (current_tag_db.ignore_duplicates and latest.reading == parsed_val)):
+            print("Dropping value: {} as latest and {} as received".format(latest.reading, parsed_val))
             latest.timestamp_receive = timezone.now()
             latest.save()
         else:

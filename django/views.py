@@ -3,7 +3,7 @@ from django.template import loader
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .receiver.receiver import debug_print, process_message
-from .retriever.request_processor import retriever_worker, get_dataset_latest, get_dataset_range
+from .retriever.request_processor import retriever_worker, get_dataset_latest, get_dataset_range, process_request
 from datetime import datetime
 
 import json
@@ -44,5 +44,12 @@ def web_data_view(request, dataset_id):
     template = loader.get_template('web_data_view.html')
     context = {"dataset_id": dataset_id, "page_name": "Data web view", "page_description": "View data online"}
     return HttpResponse(template.render(context, request))
+
+@csrf_exempt
+def data_request(request):
+    if request.method != "POST":
+        return HttpResponse(status=400)
+    else:
+        return JsonResponse(process_request(request.POST))
     
     
