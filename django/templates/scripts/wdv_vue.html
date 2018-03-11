@@ -58,7 +58,8 @@
                 }
             }
         }
-        result.updated = getTimeFromNow(latest.timestamp_packet);
+        result.received = getTimeFromNow(latest.timestamp_packet, "Изменилось");
+        result.updated = getTimeFromNow(latest.timestamp_receive, "Данные получены");
         result.id = id;
         if(latest.limits != null) {
             result.alert_value = latest.limits.result;

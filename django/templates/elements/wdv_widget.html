@@ -41,6 +41,10 @@
         </div>
         <div class="card-footer"
         v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
+            <small class="text-muted data-tag-timestamp">(( rdg.received ))</small>
+        </div>
+        <div class="card-footer"
+        v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
             <small class="text-muted data-tag-timestamp">(( rdg.updated ))</small>
         </div>
     </div>

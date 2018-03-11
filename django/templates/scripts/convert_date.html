@@ -18,7 +18,7 @@
         return 2;
     }
 
-    function getTimeFromNow(iso_string) {
+    function getTimeFromNow(iso_string, action_string="Обновлено") {
         var inputDate = getDateFromISO(iso_string);
         var elapsed_minutes_total = parseInt((Date.now() - inputDate) / 1000 / 60);
         var elapsed_hours = parseInt(elapsed_minutes_total / 60);
@@ -26,7 +26,7 @@
         var elapsed_minutes = elapsed_minutes_total - elapsed_hours * 60;
         var out_str = ""
         if (elapsed_minutes_total == 0) {
-            out_str = "Обновлено менее минуты назад";
+            out_str = action_string + " менее минуты назад";
         }
         else if (elapsed_minutes_total < 0) {
             out_str = "Проверьте настройки времени";
@@ -76,7 +76,7 @@
                     }
                 }
             }
-            out_str = "Обновлено " + out_str + "назад";
+            out_str = action_string + " " + out_str + "назад";
         }
         return out_str;
     }

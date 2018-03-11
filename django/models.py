@@ -19,11 +19,24 @@ class DataSource(models.Model):
         return "{} - {} ({} {}) [{}]".format(self.name, self.uid, self.maintainer.first_name,
                                         self.maintainer.last_name, "ACT" if self.active else "OFF")
 
+
+class FilterDelta(models.Model):
+    delta_value = models.FloatField(verbose_name="Интервал нечувствительности")
+    def __str__(self):
+        return "+/- {}".format(self.delta_value)
+    class Meta:
+        ordering = ['delta_value']
+        verbose_name = "Интервал нечувствительности"
+        verbose_name_plural = "Интервалы нечувствительности"
+
+
 class DataTag(models.Model):
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, verbose_name="Источник")
     name = models.CharField(max_length=255, verbose_name="Название")
     units = models.CharField(max_length=40, verbose_name="Единицы измерения", blank=True, default="")
     display_name = models.CharField(max_length=200, verbose_name="Отображаемое название", blank=True, default="")
+    ignore_duplicates = models.BooleanField(default=False, verbose_name="Игнорировать повторяющиеся значения")
+    filter_delta = models.ForeignKey(FilterDelta, blank=True, null=True, verbose_name="Интервал нечувствительности", on_delete=models.SET_NULL)
     class Meta:
         ordering = ['name']
         verbose_name = "Тэг"
@@ -46,6 +59,7 @@ class Error(models.Model):
         verbose_name_plural = "Ошибки"
     def __str__(self):
         return self.error
+
 
 class Reading(models.Model):
     tag = models.ForeignKey(DataTag, on_delete=models.CASCADE, verbose_name="Тэг")
@@ -94,7 +108,7 @@ class AlertValues(models.Model):
     critical_lower_boundary = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
                                                 verbose_name="Нижняя аварийная граница", related_name="critical_lower_boundary_of")
     strict_equal_value = models.ForeignKey(DataTag, null=True, blank=True, default=None, on_delete=models.CASCADE,
-                                     verbosk["time_back_ago"]e_name="Строгое нормативное значение", related_name="strict_equal_value_of")
+                                     verbose_name="Строгое нормативное значение", related_name="strict_equal_value_of")
 
     class Meta:
         ordering = ['parameter']

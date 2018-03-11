@@ -2,7 +2,11 @@ from datacon.models import DataSource, DataTag, Error, ReadingNumeric, ReadingDi
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.http import Http404, HttpResponseBadRequest
+from django.utils import timezone
 from datetime import datetime
+
+from datacon.retriever.basic import get_latest_valid_tag
+
 import json
 
 def debug_print(message):
@@ -51,9 +55,14 @@ def write_reading(datasource, message_as_dict):
                     rdg_base = ReadingText.objects
         t_packet_s = datetime.strptime(message_as_dict["start_time"], "%Y-%m-%dT%H:%M:%S.%f")
         t_packet_e = datetime.strptime(message_as_dict["end_time"], "%Y-%m-%dT%H:%M:%S.%f")
-        tto = (t_packet_e - t_packet_s).total_seconds()
-        rdg = rdg_base.create(tag=current_tag_db, timestamp_packet=t_packet_e, time_to_obtain=tto,
-                                error=error, reading=parsed_val)
+        latest = rdg_base.filter(tag=current_tag_db, error=None).latest("timestamp_packet")
+        if latest.timestamp_packet.replace(tzinfo=None) < t_packet_e and \
+                ((current_tag_db.filter_delta is not None and current_tag_db.filter_delta.delta_value > parsed_val - latest.reading) or \
+                (current_tag_db.ignore_duplicates and latest.reading == parsed_val)):
+            latest.timestamp_receive = timezone.now()
+            latest.save()
+        else:
+            tto = (t_packet_e - t_packet_s).total_seconds()
+            rdg_base.create(tag=current_tag_db, timestamp_packet=t_packet_e, time_to_obtain=tto,
+                                    error=error, reading=parsed_val)
     return (200, "Message received")
-
-# TODO: Input filters (as for base optimization schemes)

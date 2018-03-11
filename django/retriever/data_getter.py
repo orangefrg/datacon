@@ -84,9 +84,7 @@ def get_tags_latest(tags,
                 if t not in pre_result or v.timestamp_packet > pre_result[t].timestamp_packet:
                     pre_result[t] = v
                 break
-    
-
-    pass
+                
 
 def get_tags_latest_n(tags,
                       depth=50,
