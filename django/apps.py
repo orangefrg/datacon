@@ -16,6 +16,6 @@ class DataconConfig(AppConfig):
             from datacon.processing.base_economy import reduce_by_scheme
             print("Standard startup scheme - using uWSGI scheduler")
             uwsgi.register_signal(89, "", reduce_by_scheme)
-            uwsgi.add_cron(89, -1, 0, -1, -1, -1)
+            uwsgi.add_timer(89, 86400)
         else:
             print("Running without UWSGI (reduced functionality)")

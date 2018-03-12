@@ -130,6 +130,8 @@ def retriever_worker(request_post):
 #    date_start (ISO string mandatory) latest timestamp or data needed
 #    date_end (ISO string optional default=now) earliest timestamp of data needed
 #    max_numbers (integer optional default=50) maximum number of readings
+#    bound_earlier (boolean optional default=True) get closest earlier value in case none are available in range
+#    bound_later (boolean optional default=False) get closest later value in case none are available in range
 #    LATEST N MODE
 #    depth (ISO string mandatory) number of readings needed
 # ---
@@ -164,6 +166,16 @@ def _validate_parameters(settings):
             except:
                 num = 50
             result_parameters["max_number"] = num
+        if "bound_eariler" in settings:
+            try:
+                result_parameters["bound_earlier"] = bool(settings["bound_earlier"])
+            except:
+                pass
+        if "bound_later" in settings:
+            try:
+                result_parameters["bound_later"] = bool(settings["bound_later"])
+            except:
+                pass
     # Latest N mode
     elif "depth" in settings:
         mode = MODE_N_LATEST

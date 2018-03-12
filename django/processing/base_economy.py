@@ -122,6 +122,8 @@ def days_to_timedelta(days):
     return timedelta(days=days)
 
 def reduce_by_scheme(simulate=False):
+    print("STARTING REDUCTION")
+    t_start = datetime.now()
     reduction = []
     scheme = _obtain_reduction_scheme()
     for dt, settings in scheme.items():
@@ -141,4 +143,6 @@ def reduce_by_scheme(simulate=False):
                     "count": reduction_count
                 }
             )
+    t_elapsed = (datetime.now() - t_start).total_seconds()
+    print("BASE REDUCED IN {} s".format(t_elapsed))
     return reduction

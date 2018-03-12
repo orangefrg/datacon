@@ -121,11 +121,15 @@ def query_dataset_range(dataset_id,
                    round_numerics=2,
                    get_limits=LIMITS_BASIC,
                    get_trends=[],
-                   diag_info=False):
+                   diag_info=False,
+                   bound_earlier=True,
+                   bound_later=False):
     try:
         ds = DataSet.objects.get(uid=dataset_id)
     except:
         result = {}
         result["error"] = "Dataset not found"
         return result
-    return query_tags_range(ds.tags.all(), date_start, date_end, max_number, only_valid, round_numerics, get_limits, get_trends, diag_info)
+    return query_tags_range(ds.tags.all(), date_start, date_end, max_number,
+                            only_valid, round_numerics, get_limits, get_trends, diag_info,
+                            bound_earlier, bound_later)

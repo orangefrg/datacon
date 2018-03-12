@@ -90,13 +90,16 @@ def _process_tag(tag,
                  diag_info=False,
                  date_start=None,
                  date_end=None,
-                 number=None):
+                 number=None,
+                 bound_earlier=True,
+                 bound_later=False):
     result = {}
     result["name"] = tag.name
     result["display_name"] = tag.display_name
     result["units"] = tag.units
+    readings = []
     if date_start is not None:
-        readings = tag.range_of_readings(date_start, date_end, number, only_valid)
+        readings = tag.range_of_readings(date_start, date_end, number, only_valid, bound_earlier, bound_later)
     elif number is not None:
         readings = tag.latest_n_readings(number, only_valid)
     else:
@@ -201,13 +204,18 @@ def query_tags_range(tags,
                    round_numerics=2,
                    get_limits=LIMITS_BASIC,
                    get_trends=[],
-                   diag_info=False):
+                   diag_info=False,
+                   bound_earlier=True,
+                   bound_later=False):
     t_start = datetime.now()
     result = {
         "tags": []
     }
     for t in tags:
-        result["tags"].append(_process_tag(t, round_numerics, only_valid, get_limits, get_trends, diag_info, date_start, date_end, max_number))
+        result["tags"].append(_process_tag(t, round_numerics, only_valid,
+                                           get_limits, get_trends, diag_info,
+                                           date_start, date_end, max_number,
+                                           bound_earlier, bound_later))
     time_to_obtain = (datetime.now() - t_start).total_seconds()
     if round_numerics is not None:
         result["time_to_obtain"] = round(time_to_obtain, round_numerics)

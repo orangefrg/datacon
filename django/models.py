@@ -96,13 +96,15 @@ class DataTag(models.Model):
         r_sorted = sorted(r_all, key=lambda k: k.timestamp_packet, reverse=True)[:number]
         return r_sorted
 
-    def range_of_readings(self, date_start, date_end=None, max_number=None, only_valid=True):
+    def range_of_readings(self, date_start, date_end=None, max_number=None, only_valid=True, bound_earlier=True, bound_later=False):
         kw = {
             "tag": self,
             "timestamp_packet__gte": date_start
         }
         if date_end is not None:
             kw["timestamp_packet__lte"] = date_end
+        elif bound_later:
+            date_end = datetime.now()
         if only_valid:
             kw["error"] = None
         r_all = list(ReadingNumeric.objects.filter(**kw))
@@ -111,6 +113,47 @@ class DataTag(models.Model):
         if max_number is None:
             max_number = 100
         r_sorted = sorted(r_all, key=lambda k: k.timestamp_packet, reverse=True)[:max_number]
+        if len(r_all)==0:
+            if bound_later:
+                kw_later = {
+                    "tag": self,
+                    "timestamp_packet__gte": date_end
+                }
+                r_later = []
+                try:
+                    r_later.append(list(ReadingNumeric.objects.filter(**kw_later).order_by("timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                try:
+                    r_later.append(list(ReadingDiscrete.objects.filter(**kw_later).order_by("timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                try:
+                    r_later.append(list(ReadingText.objects.filter(**kw_later).order_by("timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                if len(r_later) > 0:
+                    r_sorted.append(sorted(r_later, key=lambda k: k.timestamp_packet)[0])
+            if bound_earlier:
+                kw_earlier = {
+                    "tag": self,
+                    "timestamp_packet__lte": date_start
+                }
+                r_earlier = []
+                try:
+                    r_earlier.append(list(ReadingNumeric.objects.filter(**kw_earlier).order_by("-timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                try:
+                    r_earlier.append(list(ReadingDiscrete.objects.filter(**kw_earlier).order_by("-timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                try:
+                    r_earlier.append(list(ReadingText.objects.filter(**kw_earlier).order_by("-timestamp_packet"))[0])
+                except IndexError:
+                    pass
+                if len(r_earlier) > 0:
+                    r_sorted.append(sorted(r_earlier, key=lambda k: k.timestamp_packet, reverse=True)[0])
         return r_sorted
 
 
