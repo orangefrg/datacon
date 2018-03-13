@@ -1,6 +1,5 @@
 <script>
     // Helpers
-    var request_big_interval = 8;
     var csrftoken;
     var dataset_id;
     var trendDict = {
@@ -15,44 +14,59 @@
         // these HTTP methods do not require CSRF protection
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     };
-    function requestData(parameters) {
-        var temp_parameters = Object.assign(parameters);
-        console.log("Requesting");
-        if(++request_big_interval == 10) {
-            console.log("Big");
-            var stDate = new Date();
-            stDate.setHours(stDate.getHours() - 12);
-            temp_parameters.date_start = stDate.toISOString();
-            temp_parameters.max_number = 400;
-            request_big_interval = 0;
-        }
-        $.post("/datacon/display/webapi", {settings: JSON.stringify(temp_parameters)}, processData);
-        console.log("Request over");
+    function requestData() {
+        $.post("/datacon/display/" + dataset_id, processData);
     };
     function processData(response, status) {
         if (status != "success") {
             return;
         }
-        var results = response.tags;
-        console.log(response.time_to_obtain);
+        var results = response.results;
         for(i=0;i<results.length;i++) {
             results[i] = processResult(results[i], i);
         };
         received_data.tags = results;
     };
     function processResult(result, id) {
-        var latest = result.readings[0];
+        var latest = result.reading[0];
         result.display_reading = latest.reading + " " + result.units;
-        //TODO: trends
+        if (latest.trend_3h != null && latest.trend_24h != null) {
+            result.display_trend_3h = trendDict[latest.trend_3h.direction] + " за последние 3 часа";
+            result.display_trend_24h = trendDict[latest.trend_24h.direction] + " за последние сутки";
+            if(latest.trend_3h.direction == "increase") {
+                if(latest.trend_24h.direction == "increase") {
+                    result.trend_display = "inc_all";
+                }
+                else {
+                    result.trend_display = "inc_3";
+                }
+            }
+            else if(latest.trend_3h.direction == "decrease") {
+                if(latest.trend_24h.direction == "decrease") {
+                    result.trend_display = "dec_all";
+                }
+                else {
+                    result.trend_display = "dec_3";
+                }
+            }
+            else if(latest.trend_3h.direction == "stable") {
+                if(latest.trend_24h.direction == "stable") {
+                    result.trend_display = "stab_all";
+                }
+                else {
+                    result.trend_display = "stab_3";
+                }
+            }
+        }
         result.received = getTimeFromNow(latest.timestamp_packet, "Изменилось");
         result.updated = getTimeFromNow(latest.timestamp_receive, "Данные получены");
         result.id = id;
         if(latest.limits != null) {
-            result.alert_value = latest.limits.state;
-            if(latest.limits.state == "very_high" || latest.limits.result == "very_low") {
+            result.alert_value = latest.limits.result;
+            if(latest.limits.result == "very_high" || latest.limits.result == "very_low") {
                 result.alert_state = "danger";
             }
-            else if(latest.limits.state != "normal") {
+            else if(latest.limits.result != "normal") {
                 result.alert_state = "warning";
             }
         }
@@ -76,7 +90,6 @@
         data: received_data
     });
 
-
     // Document readiness handler
     $( document ).ready(function() {
         csrftoken = Cookies.get('csrftoken');
@@ -88,16 +101,7 @@
                 }
             }
         });
-        var parameters_small = {
-            dataset: dataset_id,
-            only_valid: true,
-            round_numerics: 2,
-            get_limits: 2,
-            diag_info: true,
-            get_trends: [10800, 86400]
-        };
-        requestData(parameters_small);
-        requestData(parameters_small);
-        setInterval(requestData, 30000, parameters_small);
+        requestData();
+        setInterval(requestData, 30000);
     });
 </script>

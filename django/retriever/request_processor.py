@@ -6,7 +6,7 @@ import json
 from uuid import UUID
 from django.core.exceptions import ObjectDoesNotExist
 from datacon.models import DataSource, DataTag, DataSet, Error, ReadingNumeric, ReadingDiscrete, ReadingText
-
+from dateutil import parser
 
 MODE_LATEST = 0
 MODE_N_LATEST = 1
@@ -70,9 +70,9 @@ def get_dataset_range(dataset_id, date_start, date_end=datetime.now(), round_num
 def retrieve_dataset(request):
     dataset_id = UUID(request["dataset_id"])
     if "date_start" in request:
-        date_start = datetime.strptime(request["date_start"], "%Y-%m-%dT%H:%M:%S.%f")
+        date_start = parser.parse(request["date_start"])
         if "date_end" in request:
-            date_end = datetime.strptime(request["date_end"], "%Y-%m-%dT%H:%M:%S.%f")
+            date_end = parser.parse(request["date_end"])
             result = get_dataset_range(dataset_id, date_start, date_end)
         else:
             result = get_dataset_range(dataset_id, date_start)
@@ -85,9 +85,9 @@ def retrieve_single_tag(request):
     datasource_id = UUID(request["datasource_id"])
     tag_name = request["tag_name"]
     if "date_start" in request:
-        date_start = datetime.strptime(request["date_start"], "%Y-%m-%dT%H:%M:%S.%f")
+        date_start = parser.parse(request["date_start"])
         if "date_end" in request:
-            date_end = datetime.strptime(request["date_end"], "%Y-%m-%dT%H:%M:%S.%f")
+            date_end = parser.parse(request["date_end"])
             result = get_range_valid_tag(datasource_id, tag_name, date_start, date_end)
         else:
             result = get_range_valid_tag(datasource_id, tag_name, date_start)
@@ -118,8 +118,7 @@ def retriever_worker(request_post):
     return result
 
 # Input JSON structure:
-# settings
-# ---
+#
 #    dataset - dataset id
 #    OR
 #    tags - list of dicts:
@@ -129,7 +128,7 @@ def retriever_worker(request_post):
 #    RANGE MODE
 #    date_start (ISO string mandatory) latest timestamp or data needed
 #    date_end (ISO string optional default=now) earliest timestamp of data needed
-#    max_numbers (integer optional default=50) maximum number of readings
+#    max_number (integer optional default=50) maximum number of readings
 #    bound_earlier (boolean optional default=True) get closest earlier value in case none are available in range
 #    bound_later (boolean optional default=False) get closest later value in case none are available in range
 #    LATEST N MODE
@@ -149,13 +148,13 @@ def _validate_parameters(settings):
     if "date_start" in settings:
         mode = MODE_RANGE
         try:
-            d_start = datetime.strptime(settings["date_start"], "%Y-%m-%dT%H:%M:%S.%f")
+            d_start = parser.parse(settings["date_start"])
         except:
             d_start = datetime.now() - timedelta(seconds=60)
         result_parameters["date_start"] = d_start
         if "date_end" in settings:
             try:
-                d_end = datetime.strptime(settings["date_end"], "%Y-%m-%dT%H:%M:%S.%f")
+                d_end = parser.parse(settings["date_end"])
             except:
                 pass
         if "max_number" in settings:
@@ -214,6 +213,7 @@ def _validate_parameters(settings):
         except:
             pass
     # Getting appropriate mode
+    query = None
     if "dataset" in settings:
         result_parameters["dataset_id"] = settings["dataset"]
         query = DATASET_QUERY
@@ -234,11 +234,12 @@ def _validate_parameters(settings):
 def process_request(request_post):
     stage = "decoding request"
     try:
+        result = None
+        print(request_post)
         settings = json.loads(request_post["settings"])
         stage = "getting settings"
         kw, mode, query = _validate_parameters(settings)
         if query == DATASET_QUERY:
-            print(kw)
             if mode == MODE_RANGE:
                 result = query_dataset_range(**kw)
             elif mode == MODE_N_LATEST:
@@ -246,7 +247,6 @@ def process_request(request_post):
             else:
                 result = query_dataset_latest(**kw)
         elif query == TAGS_QUERY:
-            print(kw)
             tags, pre_result = obtain_tags_list([kw["tags"]])
             kw["tags"] = tags
             if mode == MODE_RANGE:

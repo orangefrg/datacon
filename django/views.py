@@ -51,5 +51,13 @@ def data_request(request):
         return HttpResponse(status=400)
     else:
         return JsonResponse(process_request(request.POST))
+
+@csrf_exempt
+def repeater(request):
+    if request.method != "POST":
+        return HttpResponse(status=400)
+    else:
+        print(request.POST)
+        return HttpResponse()
     
     
