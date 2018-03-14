@@ -1,0 +1,74 @@
+<script>
+    var lastStatus = null;
+    var coreData = {};
+    var visualData = {};
+    var diagData = {};
+
+    function compareReadingsByTimestamp(a, b) {
+        var dt_a = getDateFromISO(a.timestamp_packet);
+        var dt_b = getDateFromISO(b.timestamp_packet);
+        if (dt_a > dt_b) {
+            return -1;
+        }
+        else if (dt_a < dt_b) {
+            return 1;
+        }
+        return 0;
+    }
+
+
+    function updateSingleTag(tag, index) {
+        var element;
+        if (coreData[index].name != tag.name) {
+            element = null;
+            for (i=0; i<coreData.length; i++) {
+                if (coreData[i].name == tag.name) {
+                    index = i;
+                    element = coreData[i];
+                }
+            }
+            if (element == null) {
+                element = tag;
+                coreData.push(element);
+                return element;
+            }
+        }
+        else {
+            element = coreData[index];
+        }
+        for (i=0; i<tag.readings.length; i++) {
+            var alreadyExists = false;
+            for (j=0; j<element.readings.length; j++) {
+                if (element.readings[j].timestamp_packet == tag.readings[i].timestamp_packet) {
+                    alreadyExists = true;
+                }
+            }
+            if (!alreadyExists) {
+                element.readings.push(tag.readings[i]);
+                element.readings.sort(compareReadingsByTimestamp);
+            }
+        }
+        return element;
+    }
+
+
+    function processVisuals(tag, index) {
+        var element;
+        if (visualData[index].name != tag.name) {
+            // Get valid visual tag
+        }
+    }
+
+
+    function processCoreData(response, status) {
+        if (response.hasOwnProperty('error')) {
+            diagData.error = response.error;
+            return;
+        } 
+        diagData.time_to_obtain = response.time_to_obtain;
+        for (k=0; k<response.tags.length; k++) {
+            updateSingleTag(response.tags[k], k);
+        }
+        
+    }
+</script>>

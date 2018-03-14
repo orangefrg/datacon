@@ -62,7 +62,6 @@ def write_reading(datasource, message_as_dict):
         if latest.timestamp_packet.replace(tzinfo=None) < t_packet_e and \
                 ((current_tag_db.filter_delta is not None and is_numeric and current_tag_db.filter_delta.delta_value > abs(parsed_val - latest.reading)) or \
                 (current_tag_db.ignore_duplicates and latest.reading == parsed_val)):
-            print("Dropping value: {} as latest and {} as received".format(latest.reading, parsed_val))
             latest.timestamp_receive = timezone.now()
             latest.save()
         else:
