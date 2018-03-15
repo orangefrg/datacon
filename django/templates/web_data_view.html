@@ -8,16 +8,18 @@
     <div class="container">
         <div class="card-columns" id="main-app">
             <!-- cards here -->
-            <datatag-item v-for="rdg in tags"
+            <datatag-item v-for="rdg in coreData"
                 v-bind:rdg="rdg"
                 v-bind:key="rdg.id">
             </datatag-item>
         </div>
     </div>
     <!-- Vue here -->
-    {% include "elements/wdv_widget.html" %}
+    {% include "scripts/wdv_data_receive.html" %}
+    {% include "scripts/wdv_vue_bindings.html" %}
+    {% include "elements/wdv_generic_widget.html" %}
     {% include "scripts/convert_date.html" %}
-    {% include "scripts/wdv_vue.html" %}
+    {% include "scripts/wdv_data_request.html" %}
 
 </body>
 </html>

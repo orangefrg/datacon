@@ -235,7 +235,6 @@ def process_request(request_post):
     stage = "decoding request"
     try:
         result = None
-        print(request_post)
         settings = json.loads(request_post["settings"])
         stage = "getting settings"
         kw, mode, query = _validate_parameters(settings)

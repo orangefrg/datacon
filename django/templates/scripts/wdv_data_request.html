@@ -1,0 +1,52 @@
+<script>
+
+    var request_big_interval = 8;
+
+    function obtainDataSetID() {
+        dataset_id = $( "#dataSetID" ).val();
+    };
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    };
+
+    function requestData(parameters) {
+        var stDate = new Date();
+        var temp_parameters = JSON.parse(JSON.stringify(parameters));
+        var rqType = "standard";
+        if(++request_big_interval == 10) {
+            rqType = "extended";
+            stDate.setHours(stDate.getHours() - 12);
+            temp_parameters.date_start = stDate.toISOString();
+            temp_parameters.max_number = 400;
+            request_big_interval = 0;
+        }
+        $.post("/datacon/display/webapi", {settings: JSON.stringify(temp_parameters)}, processCoreData);
+        var finDate = new Date();
+        console.log("Performed " + rqType + " request in " + (finDate - stDate)/1000 + " s.");
+    };
+
+    $( document ).ready(function() {
+        csrftoken = Cookies.get('csrftoken');
+        obtainDataSetID();
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        var parameters_small = {
+            dataset: dataset_id,
+            only_valid: true,
+            round_numerics: 2,
+            get_limits: 1,
+            diag_info: true,
+            get_trends: [10800, 86400]
+        };
+        requestData(parameters_small);
+        requestData(parameters_small);
+        setInterval(requestData, 30000, parameters_small);
+    });
+</script>

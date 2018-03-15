@@ -1,7 +1,6 @@
 <script>
     var lastStatus = null;
-    var coreData = {};
-    var visualData = {};
+    var coreData = [];
     var diagData = {};
 
     function compareReadingsByTimestamp(a, b) {
@@ -16,46 +15,108 @@
         return 0;
     }
 
-
     function updateSingleTag(tag, index) {
         var element;
-        if (coreData[index].name != tag.name) {
+        if (coreData.length <= index) {
+                element = tag;
+                element.id = index;
+                element.display = {};
+                coreData.push(element);
+                element.readings.sort(compareReadingsByTimestamp);
+                return element;
+        }
+        else if (coreData[index].name != tag.name) {
             element = null;
             for (i=0; i<coreData.length; i++) {
                 if (coreData[i].name == tag.name) {
                     index = i;
                     element = coreData[i];
+                    break;
                 }
             }
             if (element == null) {
                 element = tag;
+                element.id = index;
+                element.display = {};
                 coreData.push(element);
+                element.readings.sort(compareReadingsByTimestamp);
                 return element;
             }
         }
         else {
             element = coreData[index];
         }
+        var addedReading = false;
         for (i=0; i<tag.readings.length; i++) {
             var alreadyExists = false;
             for (j=0; j<element.readings.length; j++) {
                 if (element.readings[j].timestamp_packet == tag.readings[i].timestamp_packet) {
                     alreadyExists = true;
+                    element.readings[j] = tag.readings[i]
+                    break;
                 }
             }
             if (!alreadyExists) {
                 element.readings.push(tag.readings[i]);
-                element.readings.sort(compareReadingsByTimestamp);
+                addedReading = true;
             }
+        }
+        if (addedReading) {
+            element.readings.sort(compareReadingsByTimestamp);
         }
         return element;
     }
 
-
-    function processVisuals(tag, index) {
-        var element;
-        if (visualData[index].name != tag.name) {
-            // Get valid visual tag
+    function processSingleTag(tag, index) {
+        if (tag.readings.length>0) {
+            tag.display.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Изменилось");
+            tag.display.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Данные получены");
+            tag.display.reading = tag.readings[0].reading + " " + tag.units;
+            tag.enabled = true
+            if (tag.readings[0].limits != null) {
+                // Limits
+                tag.display.limit = tag.readings[0].limits.state;
+                if (tag.display.limit == "very_high" || tag.display.limit == "very_low") {
+                    tag.display.alert_state = "danger";
+                }
+                else if (tag.display.limit != "normal" || tag.display.limit == "low") {
+                    tag.display.alert_state = "warning";
+                }
+            }
+            if ("trends" in tag.readings[0]) {
+                // Trends
+                for (i=0; i<tag.readings[0].trends.length; i++) {
+                    if (tag.readings[0].trends[i].period_seconds == 86400) {
+                        tag.display.trend_24h = tag.readings[0].trends[i].direction;
+                        if (tag.display.trend_24h == "increase" || tag.display.trend_24h == "decrease") {
+                            tag.display.speed_24h = (tag.readings[0].trends[i].slope * 3600).toFixed(2);
+                        }
+                        tag.display.max_24h = tag.readings[0].trends[i].peak_max.reading;
+                        tag.display.min_24h = tag.readings[0].trends[i].peak_min.reading;
+                        tag.display.avg_24h = tag.readings[0].trends[i].average.reading;
+                        tag.display.enabled_24h = true;
+                        continue;
+                    }
+                    if (tag.readings[0].trends[i].period_seconds == 10800) {
+                        tag.display.trend_3h = tag.readings[0].trends[i].direction;
+                        if (tag.display.trend_3h == "increase" || tag.display.trend_3h == "decrease") {
+                            tag.display.speed_3h = (tag.readings[0].trends[i].slope * 3600).toFixed(2);
+                        }
+                        tag.display.max_3h = tag.readings[0].trends[i].peak_max.reading;
+                        tag.display.min_3h = tag.readings[0].trends[i].peak_min.reading;
+                        tag.display.avg_3h = tag.readings[0].trends[i].average.reading;
+                        tag.display.enabled_3h = true;
+                        continue;
+                    }
+                }
+            }
+        }
+        else {
+            tag.display.reading = "--";
+            tag.current_t_packet = null;
+            tag.current_t_receive = null;
+            tag.enabled = false;
+            tag.display.enabled_24h = false;
         }
     }
 
@@ -67,8 +128,9 @@
         } 
         diagData.time_to_obtain = response.time_to_obtain;
         for (k=0; k<response.tags.length; k++) {
-            updateSingleTag(response.tags[k], k);
+            var element = updateSingleTag(response.tags[k], k);
+            processSingleTag(element, k);
         }
         
     }
-</script>>
+</script>
