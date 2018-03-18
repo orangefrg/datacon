@@ -1,6 +1,11 @@
 <script>
 
-    var request_big_interval = 8;
+    var request_big_counter = 8;
+    const request_big_interval = 10;
+    var request_counter = 29;
+    const request_interval = 30;
+    var stDate, finDate;
+
 
     function obtainDataSetID() {
         dataset_id = $( "#dataSetID" ).val();
@@ -12,19 +17,29 @@
     };
 
     function requestData(parameters) {
-        var stDate = new Date();
+        diagData.time_to_request = ++request_counter;
+        if (request_counter < request_interval) {
+            return;
+        }
+        if (diagData.request_in_progress) {
+            console.log("Skipping request - last one is in progress");
+            return;
+        }
+        request_counter = 0;
+        diagData.request_in_progress = true;
+        stDate = new Date();
         var temp_parameters = JSON.parse(JSON.stringify(parameters));
         var rqType = "standard";
-        if(++request_big_interval == 10) {
+        diagData.time_to_big_request = ++request_big_counter;
+        if(request_big_counter >= request_big_interval) {
             rqType = "extended";
-            stDate.setHours(stDate.getHours() - 12);
-            temp_parameters.date_start = stDate.toISOString();
+            var initDate = new Date();
+            initDate.setHours(stDate.getHours() - 12);
+            temp_parameters.date_start = initDate.toISOString();
             temp_parameters.max_number = 400;
-            request_big_interval = 0;
+            request_big_counter = 0;
         }
         $.post("/datacon/display/webapi", {settings: JSON.stringify(temp_parameters)}, processCoreData);
-        var finDate = new Date();
-        console.log("Performed " + rqType + " request in " + (finDate - stDate)/1000 + " s.");
     };
 
     $( document ).ready(function() {
@@ -45,8 +60,8 @@
             diag_info: true,
             get_trends: [10800, 86400]
         };
+        diagData.request_in_progress = false;
         requestData(parameters_small);
-        requestData(parameters_small);
-        setInterval(requestData, 30000, parameters_small);
+        setInterval(requestData, 1000, parameters_small);
     });
 </script>

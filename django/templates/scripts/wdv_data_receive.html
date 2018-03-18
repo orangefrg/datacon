@@ -3,6 +3,8 @@
     var coreData = [];
     var diagData = {};
 
+    var lastResult = null;
+
     function compareReadingsByTimestamp(a, b) {
         var dt_a = getDateFromISO(a.timestamp_packet);
         var dt_b = getDateFromISO(b.timestamp_packet);
@@ -46,7 +48,7 @@
         else {
             element = coreData[index];
         }
-        var addedReading = false;
+        var addedReading = 0;
         for (i=0; i<tag.readings.length; i++) {
             var alreadyExists = false;
             for (j=0; j<element.readings.length; j++) {
@@ -58,79 +60,112 @@
             }
             if (!alreadyExists) {
                 element.readings.push(tag.readings[i]);
-                addedReading = true;
+                addedReading++;
             }
         }
-        if (addedReading) {
+        if (addedReading > 0) {
             element.readings.sort(compareReadingsByTimestamp);
         }
         return element;
     }
 
-    function processSingleTag(tag, index) {
+    function processSingleTag(tag) {
+        var dsp = {
+            received: "--",
+            updated: "--",
+            reading: "--",
+            alert_state: "",
+            trend_24h: "",
+            speed_24h: "",
+            max_24h: "",
+            min_24h: "",
+            avg_24h: "",
+            enabled_24h: false,
+            trend_3h: "",
+            speed_3h: "",
+            max_3h: "",
+            min_3h: "",
+            avg_3h: "",
+            enabled_3h: false,
+        }
         if (tag.readings.length>0) {
-            tag.display.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Изменилось");
-            tag.display.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Данные получены");
-            tag.display.reading = tag.readings[0].reading + " " + tag.units;
+            dsp.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Последнее изменение");
+            dsp.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Обновлено");
+            dsp.reading = tag.readings[0].reading + " " + tag.units;
             tag.enabled = true
             if (tag.readings[0].limits != null) {
                 // Limits
-                tag.display.limit = tag.readings[0].limits.state;
-                if (tag.display.limit == "very_high" || tag.display.limit == "very_low") {
-                    tag.display.alert_state = "danger";
+                dsp.limit = tag.readings[0].limits.state;
+                if (dsp.limit == "very_high" || dsp.limit == "very_low") {
+                    dsp.alert_state = "danger";
                 }
-                else if (tag.display.limit != "normal" || tag.display.limit == "low") {
-                    tag.display.alert_state = "warning";
+                else if (dsp.limit != "normal" || dsp.limit == "low") {
+                    dsp.alert_state = "warning";
                 }
             }
-            if ("trends" in tag.readings[0]) {
+            if (tag.readings[0].trends != null) {
                 // Trends
                 for (i=0; i<tag.readings[0].trends.length; i++) {
-                    if (tag.readings[0].trends[i].period_seconds == 86400) {
-                        tag.display.trend_24h = tag.readings[0].trends[i].direction;
-                        if (tag.display.trend_24h == "increase" || tag.display.trend_24h == "decrease") {
-                            tag.display.speed_24h = (tag.readings[0].trends[i].slope * 3600).toFixed(2);
-                        }
-                        tag.display.max_24h = tag.readings[0].trends[i].peak_max.reading;
-                        tag.display.min_24h = tag.readings[0].trends[i].peak_min.reading;
-                        tag.display.avg_24h = tag.readings[0].trends[i].average.reading;
-                        tag.display.enabled_24h = true;
+                    var currentTrend = tag.readings[0].trends[i];
+                    if (currentTrend == null || (currentTrend.error != undefined && currentTrend.error != "")) {
                         continue;
                     }
-                    if (tag.readings[0].trends[i].period_seconds == 10800) {
-                        tag.display.trend_3h = tag.readings[0].trends[i].direction;
-                        if (tag.display.trend_3h == "increase" || tag.display.trend_3h == "decrease") {
-                            tag.display.speed_3h = (tag.readings[0].trends[i].slope * 3600).toFixed(2);
+                    if (currentTrend.period_seconds == 86400) {
+                        dsp.trend_24h = currentTrend.direction;
+                        if (dsp.trend_24h == "increase" || dsp.trend_24h == "decrease") {
+                            dsp.speed_24h = (currentTrend.slope * 3600).toFixed(2);
                         }
-                        tag.display.max_3h = tag.readings[0].trends[i].peak_max.reading;
-                        tag.display.min_3h = tag.readings[0].trends[i].peak_min.reading;
-                        tag.display.avg_3h = tag.readings[0].trends[i].average.reading;
-                        tag.display.enabled_3h = true;
+                        dsp.max_24h = currentTrend.peak_max.reading.toFixed(2);
+                        dsp.max_24h_time = new Date(getDateFromISO(currentTrend.peak_max.time));
+                        dsp.min_24h = currentTrend.peak_min.reading.toFixed(2);
+                        dsp.min_24h_time = new Date(getDateFromISO(currentTrend.peak_min.time));
+                        dsp.avg_24h = currentTrend.average.reading.toFixed(2);
+                        dsp.num_24h = currentTrend.number;
+                        dsp.enabled_24h = true;
+                        continue;
+                    }
+                    if (currentTrend.period_seconds == 10800) {
+                        dsp.trend_3h = currentTrend.direction;
+                        if (dsp.trend_3h == "increase" || dsp.trend_3h == "decrease") {
+                            dsp.speed_3h = (currentTrend.slope * 3600).toFixed(2);
+                        }
+                        dsp.max_3h = currentTrend.peak_max.reading.toFixed(2);
+                        dsp.max_3h_time = new Date(getDateFromISO(currentTrend.peak_max.time));
+                        dsp.min_3h = currentTrend.peak_min.reading.toFixed(2);
+                        dsp.min_3h_time = new Date(getDateFromISO(currentTrend.peak_min.time));
+                        dsp.avg_3h = currentTrend.average.reading.toFixed(2);
+                        dsp.num_3h = currentTrend.number;
+                        dsp.enabled_3h = true;
                         continue;
                     }
                 }
             }
         }
         else {
-            tag.display.reading = "--";
+            dsp.reading = "--";
             tag.current_t_packet = null;
             tag.current_t_receive = null;
             tag.enabled = false;
-            tag.display.enabled_24h = false;
+            dsp.enabled_24h = false;
         }
+        tag.display = dsp;
     }
 
 
     function processCoreData(response, status) {
+        lastResult = response;
         if (response.hasOwnProperty('error')) {
             diagData.error = response.error;
             return;
         } 
-        diagData.time_to_obtain = response.time_to_obtain;
+        diagData.obtain_timing = response.time_to_obtain;
         for (k=0; k<response.tags.length; k++) {
             var element = updateSingleTag(response.tags[k], k);
-            processSingleTag(element, k);
+            processSingleTag(element);
         }
-        
+        diagData.request_in_progress = false;
+        finDate = new Date();
+        diagData.request_timing = (finDate - stDate)/1000;
+        console.log("Finished request in " + diagData.time_to_request + " seconds");     
     }
 </script>

@@ -1,21 +1,126 @@
 <template id="datatag-widget">
     <div class="card"
-        v-bind:class="rdg.display.alert_state != null ? 'border-' + rdg.display.alert_state : ''">
+        v-bind:class="rdg.display.alert_state != null ? 'border-' + rdg.display.alert_state : ''"
+        v-bind:id="'widget-' + rdg.id">
         <div class="card-body"
             v-bind:class="rdg.display.alert_state != null ? 'text-' + rdg.display.alert_state : ''">
             <h5 class="card-title data-tag-name">(( rdg.display_name ))</h5>
-            <label class="card-text display-4 data-tag-value"
-                v-bind:style="{fontSize: rdg.display.reading.length > 9 ? rdg.display.reading.length > 15 ? '2rem' : '2.5rem' : fontSize}">
-                (( rdg.display.reading ))
-            </label>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <label class="card-text display-4 data-tag-value"
+                            v-bind:style="{fontSize: rdg.display.reading.length > 8 ? rdg.display.reading.length > 10 ? rdg.display.reading.length > 13 ? '1.5rem' : '2rem' : '2.5rem' : fontSize}">
+                            (( rdg.display.reading ))
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-footer"
-        v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
-            <small class="text-muted data-tag-timestamp">(( rdg.display.received ))</small>
+        <div class="card-header">
+            <div class="row justify-content-center">
+                <div class="mb-0 btn-group">
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'trends-main-' + rdg.id"
+                        v-if="rdg.display.enabled_24h || rdg.display.enabled_3h">
+                        <span class="oi oi-elevator" data-toggle="tooltip" data-placement="top"
+                        title="Динамика"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'maxmin-main-' + rdg.id"
+                        v-if="rdg.display.enabled_24h">
+                        <span class="oi oi-expand-up" data-toggle="tooltip" data-placement="top"
+                        title="Статистика"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'times-main-' + rdg.id">
+                        <span class="oi oi-clock" data-toggle="tooltip" data-placement="top"
+                        title="Время обновления"></span>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="card-footer"
-        v-bind:class="rdg.alert_state != null ? 'border-' + rdg.alert_state : ''">
-            <small class="text-muted data-tag-timestamp">(( rdg.display.updated ))</small>
+        <div class="collapse"
+            v-bind:id="'trends-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id">
+            <ul class="list-group">
+                <li class="list-group-item" style="padding:0;">        
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                        v-bind:title="rdg.units + ' в час (за 3 часа)'">
+                        <p class="mb-0"><span class="mr-2"
+                            style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">3 </span>
+                            (( rdg.display.speed_3h > 0 ? "+" + rdg.display.speed_3h : rdg.display.speed_3h )) (( rdg.units ))/час
+                            <span class="oi oi-caret-bottom text-danger"
+                            v-if="rdg.display.speed_3h < 0"
+                            style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                            <span class="oi oi-caret-top text-success"
+                             v-if="rdg.display.speed_3h > 0"
+                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                        </p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    v-bind:title="rdg.units + ' в час (за сутки)'">
+                        <p class="mb-0"><span class="mr-2"
+                            style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">24</span>
+                            (( rdg.display.speed_24h > 0 ? "+" + rdg.display.speed_24h : rdg.display.speed_24h )) (( rdg.units ))/час
+                            <span class="oi oi-caret-bottom text-danger"
+                            v-if="rdg.display.speed_24h < 0"
+                            style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                            <span class="oi oi-caret-top text-success"
+                             v-if="rdg.display.speed_24h > 0"
+                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                        </p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="collapse"
+            v-bind:id="'maxmin-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id"
+            v-if="rdg.display.enabled_24h">
+            <ul class="list-group">
+                <li class="list-group-item" style="padding:0;">        
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                        title="Максимум">
+                        <p class="mb-0"><span class="oi oi-data-transfer-upload mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.max_24h + ' ' + rdg.units )) - (( rdg.display.max_24h_time.toLocaleTimeString() ))</p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    title="Минимум">
+                        <p class="mb-0"><span class="oi oi-data-transfer-download mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.min_24h + ' ' + rdg.units )) - (( rdg.display.min_24h_time.toLocaleTimeString() ))</p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    title="Среднее">
+                        <p class="mb-0"><span class="oi oi-ellipses mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.avg_24h + ' ' + rdg.units )), измерений: (( rdg.display.num_24h)) </p>
+                    </div>
+                </li>
+            </ul>
+            
+        </div>
+        <div class="collapse"
+            v-bind:id="'times-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id">
+            <ul class="list-group">
+                    <li class="list-group-item" style="padding:0;">        
+                        <div class="col" data-toggle="tooltip" data-placement="top"
+                            title="Последнее изменение данных">
+                            <small class="mb-0">(( rdg.display.updated ))</small>
+                        </div>
+                    </li>
+                    <li class="list-group-item" style="padding:0;">
+                        <div class="col" data-toggle="tooltip" data-placement="top"
+                        title="Получение последнего обновления сервером">
+                            <small class="mb-0">(( rdg.display.received ))</small>
+                        </div>
+                    </li>
+                </ul>
         </div>
     </div>
 </template>
