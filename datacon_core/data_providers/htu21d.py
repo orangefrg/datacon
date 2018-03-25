@@ -35,7 +35,8 @@ class HTU21D(Provider):
     def _get_temperature(self):
         out_temp = {"name": "Main",
                     "measured_parameter": "temperature",
-                    "units": "°C"}
+                    "units": "°C",
+                    "type": "Numeric"}
         try:
             self.log_message("Reading temperature", logging.DEBUG)  
             msb, lsb, crc = self._bus.read_i2c_block_data(self.SLAVE_ADDRESS, self.READ_TEMPERATURE_COMMAND ,3)
@@ -52,7 +53,8 @@ class HTU21D(Provider):
     def _get_humidity(self):
         out_hum = {"name": "Main",
                     "measured_parameter": "humidity",
-                    "units": "%"}
+                    "units": "%",
+                    "type": "Numeric"}
         try:
             self.log_message("Reading humidity", logging.DEBUG)  
             msb, lsb, crc = self._bus.read_i2c_block_data(self.SLAVE_ADDRESS, self.READ_HUMIDITY_COMMAND ,3)
@@ -72,7 +74,8 @@ class HTU21D(Provider):
     def _get_dewpoint(self):
         out_dew = {"name": "Dewpoint",
                    "measured_parameter": "temperature",
-                   "units": "°C"}
+                   "units": "°C",
+                   "type": "Numeric"}
         if self._last_humidity is None or self._last_temperature is None:
             self.log_message("Could not calculate dewpoint: No data", logging.DEBUG)  
             out_dew["error"] = "No input data"
@@ -103,7 +106,7 @@ class HTU21D(Provider):
     def _get_heater(self):
         out_heater = {"name": "Heater",
                       "measured_parameter": "status",
-                      "units": ""}
+                      "type": "Discrete"}
         try:
             self.log_message("Getting heater status", logging.DEBUG)  
             out_heater["reading"] = self._get_user_register_as_list()[-3] == "1"

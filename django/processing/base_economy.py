@@ -3,6 +3,8 @@ from datacon.models import ReadingNumeric, ReadingDiscrete, ReadingText, DataTag
 from datacon.models import ReductionByTime, ReductionByDelta, ReductionByDuplicates
 import math
 
+# TODO: Reduction refactoring
+
 # Helps to reduce data count in base
 # Gets all data of specific model up to date
 # Deletes all data, leaving only "one record at a specified timespan"

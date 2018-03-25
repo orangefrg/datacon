@@ -78,6 +78,7 @@ class Ds18b20(Provider):
                     current["reading"] = temp
                     current["units"] = "°C"
                     current["measured_parameter"] = "temperature"
+                    current["type"] = "Numeric"
                 reading.append(current)
             except:
                 self.log_message("Error querying sensors: {}".format(sys.exc_info()[0]), logging.ERROR)   

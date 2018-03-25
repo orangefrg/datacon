@@ -23,7 +23,8 @@ class Heartbeat(Provider):
             "name": "test",
             "units": "",
             "measured_parameter": "counter",
-            "reading": self._counter
+            "reading": self._counter,
+            "type": "Numeric"
         })
 
         self.log_message("Generating random", logging.DEBUG)
@@ -31,7 +32,8 @@ class Heartbeat(Provider):
             "name": "test",
             "units": "",
             "measured_parameter": "random",
-            "reading": randint(0, HEARTBEAT_UPPER_LIMIT)
+            "reading": randint(0, HEARTBEAT_UPPER_LIMIT),
+            "type": "Numeric"
         })
 
         if self._counter >= HEARTBEAT_UPPER_LIMIT:

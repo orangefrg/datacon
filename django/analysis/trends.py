@@ -5,6 +5,8 @@ from datacon.models import ReadingNumeric
 
 TREND_LOWER_COUNT = 5
 
+# TODO: Trends refactoring
+
 def _get_trend(readings, depth=None):
     trend_info = {}
     if len(readings) == 0:

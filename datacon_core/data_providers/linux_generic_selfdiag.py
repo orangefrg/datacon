@@ -13,10 +13,12 @@ class LinuxSelfDiagProto(Provider):
         self.log_message("Getting free space on disk", logging.DEBUG)
         f_gb = {"name": path,
                 "units": "Mb",
-                "measured_parameter": "free"}
+                "measured_parameter": "free",
+                "type": "Numeric"}
         t_gb = {"name": path,
                 "units": "Mb",
-                "measured_parameter": "total"}
+                "measured_parameter": "total",
+                "type": "Numeric"}
         try:
             p = psutil.disk_usage(path)
             free_gb = (p.total - p.used) / 1048576.0
@@ -36,10 +38,12 @@ class LinuxSelfDiagProto(Provider):
         self.log_message("Getting RAM usage", logging.DEBUG)
         f_ram = {"name": "RAM",
                 "units": "Mb",
-                "measured_parameter": "free"}
+                "measured_parameter": "free",
+                "type": "Numeric"}
         t_ram = {"name": "RAM",
                 "units": "Mb",
-                "measured_parameter": "total"}
+                "measured_parameter": "total",
+                "type": "Numeric"}
         matches = 0
         mem = psutil.virtual_memory()
         try:
@@ -60,7 +64,8 @@ class LinuxSelfDiagProto(Provider):
         cpu_l = {
             "name": "CPU",
             "measured_parameter": "load",
-            "units": "%"
+            "units": "%",
+            "type": "Numeric"
         }
         try:
             cpu_l["reading"] = psutil.cpu_percent(interval=0.1)
@@ -76,7 +81,8 @@ class LinuxSelfDiagProto(Provider):
         cpu_f = {
             "name": "CPU",
             "measured_parameter": "frequency",
-            "units": "MHz"
+            "units": "MHz",
+            "type": "Numeric"
         }
         try:
             cpu_f["reading"] = psutil.cpu_freq().current
@@ -93,7 +99,8 @@ class LinuxSelfDiagProto(Provider):
         self.log_message("Getting {} temperature".format(sensor_name), logging.DEBUG)
         tmp = { "name": sensor_name,
                 "units": "°C",
-                "measured_parameter": "temperature"}
+                "measured_parameter": "temperature",
+                "type": "Numeric"}
         try:
             tmp_value = psutil.sensors_temperatures()[sensor_id][0].current
             tmp["reading"] = tmp_value
@@ -111,27 +118,33 @@ class LinuxSelfDiagProto(Provider):
         if get_bytes:
             bytes_rx = { "name": "Network.{}".format(if_name),
                     "units": "Mb",
-                    "measured_parameter": "traffic_in"}
+                    "measured_parameter": "traffic_in",
+                    "type": "Numeric"}
             bytes_tx = { "name": "Network.{}".format(if_name),
                     "units": "Mb",
-                    "measured_parameter": "traffic_out"}
+                    "measured_parameter": "traffic_out",
+                    "type": "Numeric"}
             res_list.append(bytes_rx)
             res_list.append(bytes_tx)
         if get_errors:
             err_rx = { "name": "Network.{}".format(if_name),
                     "units": "",
-                    "measured_parameter": "errors_in"}
+                    "measured_parameter": "errors_in",
+                    "type": "Numeric"}
             err_tx = { "name": "Network.{}".format(if_name),
                     "units": "",
-                    "measured_parameter": "errors_out"}
+                    "measured_parameter": "errors_out",
+                    "type": "Numeric"}
             res_list.append(err_rx)
             res_list.append(err_tx)
         ip_v4 = { "name": "Network.{}".format(if_name),
                 "units": "",
-                "measured_parameter": "address_ip4"}
+                "measured_parameter": "address_ip4",
+                "type": "Text"}
         mac = { "name": "Network.{}".format(if_name),
                 "units": "",
-                "measured_parameter": "address_mac"}
+                "measured_parameter": "address_mac",
+                "type": "Text"}
         res_list.append(ip_v4)
         res_list.append(mac)
         addr = psutil.net_if_addrs()

@@ -95,6 +95,7 @@ class Provider:
     # reading - list of following dicts:
     # - name - sensor name
     # - measured_parameter - measured parameter type (e.g. temperature)
+    # - type - current parameter type (Numeric, Discrete or Text)
     # - reading - current sensor reading
     # - units - reading units (optional)
     # - error - error name (optional)
