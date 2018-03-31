@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from datacon.models import ViewSet
 
+from uuid import UUID
 from datetime import datetime
 # TODO: DataSet refactoring
 
@@ -83,6 +84,7 @@ from datetime import datetime
 
 def _get_all_tags(viewset_id):
     v_set = None
+    vid = UUID(viewset_id)
     try:
         v_set = ViewSet.objects.get(uid=viewset_id)
     except ObjectDoesNotExist:

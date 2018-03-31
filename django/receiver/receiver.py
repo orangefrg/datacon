@@ -4,9 +4,6 @@ from django.http import Http404
 from datetime import datetime
 import json
 
-def debug_print(message):
-    print(type(message), message)
-
 
 def process_message(datasource, message):
     try:
