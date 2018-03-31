@@ -542,23 +542,10 @@ class ViewSet(models.Model):
                                                   self.tag_count())
 
 
-class ReductionNumeric(models.Model):
-    tags = models.ManyToManyField(TagNumeric, verbose_name="Тэги", related_name="numeric_reduced_by")
-    time_back_ago = models.FloatField(verbose_name="Возраст данных для редукции")
-    minimum_delta = models.FloatField(verbose_name="Минимальная разница в значении параметра")
-
-    class Meta:
-        verbose_name = "Очистка базы по пороговому значению"
-        verbose_name_plural = "Правила очистки базы по пороговому значению"
-
-    def __str__(self):
-        return "T:{} s, D:{}".format(self.time_back_ago, self.minimum_delta)
-
-
 class ReductionTimeBased(models.Model):
-    tags = models.ManyToManyField(DataTag, verbose_name="Тэги", related_name="time_reduced_by")
-    time_back_ago = models.FloatField(verbose_name="Возраст данных для редукции")
-    minimum_timespan = models.FloatField(verbose_name="Минимальный интервал между данными")
+    tags = models.ManyToManyField(DataTag, verbose_name="Тэги", related_name="timebased_reduced_by")
+    time_back_ago = models.FloatField(verbose_name="Возраст данных для редукции (дней)")
+    minimum_timespan = models.FloatField(verbose_name="Минимальный интервал между данными (секунд)")
 
     class Meta:
         verbose_name = "Очистка базы по времени"

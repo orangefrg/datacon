@@ -1,7 +1,6 @@
 from datacon.models import ReadingDiscrete, ReadingNumeric
 from datacon.retriever.basic import get_latest_valid_value
 
-
 def get_tag_limits(value, detailed=False, by_value_date=False):
     if value.value is None:
         return {"error": "Value is none"}
