@@ -471,7 +471,7 @@ class Value(models.Model):
     timestamp_update = models.DateTimeField(auto_now=True, verbose_name="Время последнего обновления на сервере")
     time_to_obtain = models.FloatField(verbose_name="Время измерения")
 
-    error = models.ForeignKey(null=True, blank=True, on_delete=models.PROTECT, verbose_name="Ошибка")
+    error = models.ForeignKey(Error, null=True, blank=True, on_delete=models.PROTECT, verbose_name="Ошибка")
 
     class Meta:
         abstract = True
@@ -498,7 +498,7 @@ class ValueNumeric(Value):
 
 class ValueDiscrete(Value):
     tag = models.ForeignKey(TagDiscrete, on_delete=models.CASCADE, verbose_name="Элемент данных", related_name="values")
-    value = models.BooleanField(null=True, blank=True, verbose_name="Значение")
+    value = models.NullBooleanField(null=True, blank=True, verbose_name="Значение")
 
     class Meta:
         verbose_name = "Значение (дискретное)"
@@ -520,7 +520,7 @@ class ViewSet(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название")
     tags_numeric = models.ManyToManyField(TagNumeric, verbose_name="Численные тэги", related_name="viewsets")
     tags_discrete = models.ManyToManyField(TagDiscrete, verbose_name="Дискретные тэги", related_name="viewsets")
-    tags_text = models.ManyToManyField(TagDiscrete, verbose_name="Текстовые тэги", related_name="viewsets")
+    tags_text = models.ManyToManyField(TagText, verbose_name="Текстовые тэги", related_name="viewsets")
 
     class Meta:
         ordering = ['name']
