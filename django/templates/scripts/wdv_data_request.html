@@ -36,7 +36,7 @@
             var initDate = new Date();
             initDate.setHours(stDate.getHours() - 12);
             temp_parameters.date_start = initDate.toISOString();
-            temp_parameters.max_number = 400;
+            temp_parameters.number = 400;
             request_big_counter = 0;
         }
         $.post("/datacon/display/webapi", {settings: JSON.stringify(temp_parameters)}, processCoreData);

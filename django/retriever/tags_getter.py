@@ -84,7 +84,7 @@ LIMITS_DETAILED = 2
 
 def _find_tags(input_tag_names):
     tags = []
-    pre_result = []
+    missing_tags = []
     for i in input_tag_names:
         found = False
         for t in [TagDiscrete, TagNumeric, TagText]:
@@ -95,12 +95,12 @@ def _find_tags(input_tag_names):
             except ObjectDoesNotExist:
                 pass
         if not found:
-            pre_result.append({
+            missing_tags.append({
                 "name": i["name"],
                 "display_name": i["name"],
                 "error": "Tag not found"
             })
-    return tags, pre_result
+    return tags, missing_tags
 
 
 def _process_tag(tag,
@@ -214,4 +214,40 @@ def get_tags_values_range(tags,
     else:
         result["time_to_obtain"] = time_to_obtain
     result["tag_count"] = len(result["tags"])
+    return result
+
+
+def get_tags_latest_by_names(tags,
+                             only_valid=True,
+                             round_numerics=2,
+                             get_limits=LIMITS_BASIC,
+                             get_trends=[],
+                             diag_info=False):
+    tags_db, missing = _find_tags(tags)
+    result = get_tags_values_latest(tags_db, only_valid,
+                                    round_numerics, get_limits,
+                                    get_trends, diag_info)
+    if len(missing) > 0:
+        result["tags"].extend(missing)
+    return result
+
+
+def get_tags_range_by_names(tags,
+                            date_start=None,
+                            date_end=datetime.now(),
+                            number=50,
+                            only_valid=True,
+                            round_numerics=2,
+                            get_limits=LIMITS_BASIC,
+                            get_trends=[],
+                            diag_info=False,
+                            bound_earlier=True,
+                            bound_later=False):
+    tags_db, missing = _find_tags(tags)
+    result = get_tags_values_range(tags_db, date_start, date_end,
+                                   number, only_valid, round_numerics,
+                                   get_limits, get_trends, diag_info,
+                                   bound_earlier, bound_later)
+    if len(missing) > 0:
+        result["tags"].extend(missing)
     return result
