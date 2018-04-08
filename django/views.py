@@ -23,7 +23,11 @@ def data_request(request):
     if request.method != "POST":
         return HttpResponse(status=400)
     else:
-        return JsonResponse(process_request(request.POST))
+        rsp = process_request(request.POST)
+        if "error" in rsp and "code" in rsp and rsp["code"] != 200:
+            return HttpResponse(status=rsp["code"])
+        else:
+            return JsonResponse(rsp)
 
 
     

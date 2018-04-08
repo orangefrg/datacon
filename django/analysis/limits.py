@@ -1,5 +1,4 @@
-from datacon.models import ReadingDiscrete, ReadingNumeric
-from datacon.retriever.basic import get_latest_valid_value
+
 
 def get_tag_limits(value, detailed=False, by_value_date=False):
     if value.value is None:
@@ -15,7 +14,8 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
     c_lw_value = None
     strict_alert = None
     strict_values = []
-    limits = {}
+    limits = []
+    out_limits = {}
     # Collecting all limits
     if hasattr(tag, "limits"):
         for l in tag.limits.all():
@@ -51,7 +51,7 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
         else:
             status = "in"
             c_up_alert = False
-        limits["critical_upper"] = {
+        out_limits["critical_upper"] = {
             "reading": c_up_value,
             "status": status
         }
@@ -64,7 +64,7 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
         else:
             status = "in"
             up_alert = False
-        limits["upper"] = {
+        out_limits["upper"] = {
             "reading": up_value,
             "status": status
         }
@@ -77,7 +77,7 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
         else:
             status = "in"
             c_lw_alert = False
-        limits["critical_lower"] = {
+        out_limits["critical_lower"] = {
             "reading": c_lw_value,
             "status": status
         }
@@ -90,21 +90,21 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
         else:
             status = "in"
             lw_alert = False
-        limits["lower"] = {
+        out_limits["lower"] = {
             "reading": lw_value,
             "status": status
         }
     for s in strict_values:
         strict_alert = False
         if value.value != s:
-            limits["strict"] = {
+            out_limits["strict"] = {
                 "reading": s,
                 "status": "out"
             }
             strict_alert = True
             break
     if strict_alert == False:
-        limits["strict"] = {
+        out_limits["strict"] = {
             "reading": value.value,
             "status": "in"
         }
@@ -113,17 +113,17 @@ def get_tag_limits(value, detailed=False, by_value_date=False):
     res = "normal"
     if c_up_alert:
         res = "very_high"
-    elif c_lw_alert == "out":
+    elif c_lw_alert:
         res = "very_low"
-    elif strict_alert == "out":
+    elif strict_alert:
         res = "abnormal"
-    elif up_alert == "out":
+    elif up_alert:
         res = "high"
-    elif lw_alert == "out":
+    elif lw_alert:
         res = "low"
     result = {}
     result["state"] = res
     if detailed:
-        result["details"] = limits
+        result["details"] = out_limits
     return result
     

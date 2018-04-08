@@ -45,10 +45,15 @@
             <ul class="list-group">
                 <li class="list-group-item" style="padding:0;">        
                     <div class="col" data-toggle="tooltip" data-placement="top"
-                        v-bind:title="rdg.units + ' в час (за 3 часа)'">
+                        title="динамика за три часа">
                         <p class="mb-0"><span class="mr-2"
                             style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">3 </span>
-                            (( rdg.display.speed_3h > 0 ? "+" + rdg.display.speed_3h : rdg.display.speed_3h )) (( rdg.units ))/час
+                            <span  v-if="rdg.display.speed_3h != ''">
+                                (( rdg.display.speed_3h > 0 ? "+" + rdg.display.speed_3h : rdg.display.speed_3h )) (( rdg.units ))/час
+                            </span>
+                            <span v-else>
+                                значение стабильно
+                            </span>
                             <span class="oi oi-caret-bottom text-danger"
                             v-if="rdg.display.speed_3h < 0"
                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
@@ -60,10 +65,15 @@
                 </li>
                 <li class="list-group-item" style="padding:0;">
                     <div class="col" data-toggle="tooltip" data-placement="top"
-                    v-bind:title="rdg.units + ' в час (за сутки)'">
+                    title="динамика за сутки">
                         <p class="mb-0"><span class="mr-2"
                             style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">24</span>
-                            (( rdg.display.speed_24h > 0 ? "+" + rdg.display.speed_24h : rdg.display.speed_24h )) (( rdg.units ))/час
+                            <span  v-if="rdg.display.speed_24h != ''">
+                                (( rdg.display.speed_24h > 0 ? "+" + rdg.display.speed_24h : rdg.display.speed_24h )) (( rdg.units ))/час
+                            </span>
+                            <span v-else>
+                                значение стабильно
+                            </span>
                             <span class="oi oi-caret-bottom text-danger"
                             v-if="rdg.display.speed_24h < 0"
                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>

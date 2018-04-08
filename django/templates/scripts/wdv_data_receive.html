@@ -91,7 +91,10 @@
         if (tag.readings.length>0) {
             dsp.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Последнее изменение");
             dsp.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Обновлено");
-            dsp.reading = tag.readings[0].reading + " " + tag.units;
+            dsp.reading = tag.readings[0].reading;
+            if (tag.hasOwnProperty("units") && tag.units != null && tag.units != "") {
+                dsp.reading += " " + tag.units;
+            }
             tag.enabled = true
             if (tag.readings[0].limits != null) {
                 // Limits

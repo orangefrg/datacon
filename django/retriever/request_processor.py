@@ -43,7 +43,7 @@ ABSOLUTE_MAXIMUM_NUMBERS = 500
 def _determine_mode(settings):
     data_type = None
     query_type = None
-    if "dataset" in settings:
+    if "viewset_id" in settings:
         data_type = DATASET_DATA
     elif "tags" in settings:
         data_type = TAGS_DATA

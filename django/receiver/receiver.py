@@ -45,7 +45,7 @@ def try_to_save_value(tag, tag_type, value, error=None, timestamp_obtain=datetim
             parsed_val = None
     else:
         parsed_val = value
-    tag.values.add_value(parsed_val, error, timestamp_obtain, time_to_obtain)
+    tag.add_value(parsed_val, error, timestamp_obtain, time_to_obtain)
         
 
 def write_reading(datasource, message_as_dict):

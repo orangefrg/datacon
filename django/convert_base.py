@@ -2,6 +2,7 @@ from datacon.models import DataTag, DataSet, ReadingNumeric, ReadingDiscrete, Re
 from datacon.models import TagNumeric, TagDiscrete, TagText, ViewSet, InputFiltering, ValueDiscrete, ValueNumeric, ValueText
 from django.core.exceptions import ObjectDoesNotExist
 
+
 def clear_tags():
     for t in [TagNumeric, TagDiscrete, TagText]:
         t.objects.all().delete()
@@ -10,6 +11,7 @@ def clear_tags():
 def clear_records():
     for r in [ValueDiscrete, ValueNumeric, ValueText]:
         r.objects.all().delete()
+
 
 def clear_viewsets():
     ViewSet.objects.all().delete()
