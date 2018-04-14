@@ -140,7 +140,7 @@ class TagNumeric(Tag):
                 if error is not None:
                     if latest.error is None or latest.error.error != error:
                         return True
-                if self.input_filter.deadband is not None:
+                if self.input_filter.deadband is not None and latest.value is not None:
                     if abs(latest.value - value) <= self.input_filter.deadband:
                         latest.save(force_update=True)
                         return False
