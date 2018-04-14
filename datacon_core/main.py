@@ -20,6 +20,13 @@ sch = BackgroundScheduler()
 sch.start()
 # filename = sys.argv[1]
 
+# shared_config.py should contain following:
+#
+# URL_TO_SEND = "Server URL here"
+# DS = "Datasource UID here"
+# CERT_FILE = "SSL .crt file from server here"
+#
+
 ALIASES = {"28-0000043a174f": "Outside",
            "28-0000041b3610": "Inside"}
 
@@ -41,7 +48,8 @@ HB.activate_polling()
 # PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
 senders = []
 for i in range(10):
-        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"], address=shared_config.URL_TO_SEND))
+        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"],
+                                  address=shared_config.URL_TO_SEND, cert=shared_config.CERT_FILE))
 # WRITER = SimpleFileWrite("writer", "Deafult file writer", ["all", "writer"], False, "test_with_rabbit")
 
 # DALLAS.set_polling({"cron": {"minute": "0-50/10"}}, [WRITER, PRINTER])
