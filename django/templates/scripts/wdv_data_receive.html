@@ -4,6 +4,8 @@
     var diagData = {};
 
     var lastResult = null;
+    const graphWidth = 300;
+    const graphHeight = 120;
 
     function compareReadingsByTimestamp(a, b) {
         var dt_a = getDateFromISO(a.timestamp_packet);
@@ -87,6 +89,9 @@
             max_3h: "",
             min_3h: "",
             avg_3h: "",
+            graph: "",
+            graph_grid_x: [],
+            graph_grid_y: [],
             enabled_3h: false,
             obsolete_server: false,
             obsolete_client: false
@@ -146,6 +151,43 @@
                         dsp.num_3h = currentTrend.number;
                         dsp.enabled_3h = true;
                         continue;
+                    }
+                }
+                if (tag.readings.length > 4) {
+                    // Calculate trends
+                    var values = [];
+                    var timestamps = [];
+                    var min_val, max_val, min_time, max_time;
+                    var latest = getDateFromISO(tag.readings[0].timestamp_packet);
+                    for (i = 0; i < tag.readings.length; i++) {
+                        var t_stamp = getDateFromISO(tag.readings[i].timestamp_packet);
+                        if (latest - t_stamp > 86400000) {
+                            break;
+                        }
+                        var val = tag.readings[i].reading;
+                        if(val != null) {
+                            if (min_val == undefined || val < min_val) {
+                                min_val = val;
+                            }
+                            if (max_val == undefined || val > max_val) {
+                                max_val = val;
+                            }
+                            if (min_time == undefined || t_stamp < min_time) {
+                                min_time = t_stamp;
+                            }
+                            if (max_time == undefined || t_stamp > max_time) {
+                                max_time = t_stamp;
+                            }
+                            values.push(val);
+                            timestamps.push(t_stamp);
+                        }
+                    }
+                    var span_y = max_val - min_val;
+                    var span_x = max_time - min_time;
+                    for (i = values.length - 1; i >= 0; i--) {
+                        var norm_val = graphHeight - (values[i] - min_val) / (max_val - min_val) * graphHeight;
+                        var norm_time = (timestamps[i] - min_time) / (max_time - min_time) * graphWidth;
+                        dsp.graph += norm_time + ", " + norm_val + "\n";
                     }
                 }
             }

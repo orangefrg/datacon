@@ -37,6 +37,12 @@
                         title="Динамика"></span>
                     </button>
                     <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'trend-main-' + rdg.id"
+                        v-if="rdg.display.graph != ''">
+                        <span class="oi oi-graph" data-toggle="tooltip" data-placement="top"
+                        title="График"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
                         v-bind:data-target="'#' + 'maxmin-main-' + rdg.id"
                         v-if="rdg.display.enabled_24h">
                         <span class="oi oi-expand-up" data-toggle="tooltip" data-placement="top"
@@ -142,6 +148,27 @@
                         </div>
                     </li>
                 </ul>
+        </div>
+        <div class="collapse"
+            v-bind:id="'trend-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id"
+            v-if="rdg.display.graph != ''">
+            <div class="container">
+                <svg viewBox="-10 -10 310 130" class="chart">
+                    <g class="grid x-grid" id="xGrid">
+                        <line x1="0" x2="0" y1="0" y2="120" stroke="#111111"></line>
+                    </g>
+                    <g class="grid y-grid" id="yGrid">
+                        <line x1="0" x2="300" y1="120" y2="120" stroke="#111111"></line>
+                    </g>
+                    <polyline
+                       fill="none"
+                       stroke="#0000ff"
+                       stroke-width="0.75"
+                       v-bind:points="rdg.display.graph"
+                     />
+                </svg>
+            </div>
         </div>
     </div>
 </template>

@@ -18,7 +18,6 @@ logging.basicConfig(filename='datacon_main.log', level=logging.WARNING)
 initial_config()
 sch = BackgroundScheduler()
 sch.start()
-# filename = sys.argv[1]
 
 # shared_config.py should contain following:
 #
@@ -33,17 +32,14 @@ ALIASES = {"28-0000043a174f": "Outside",
 DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, publish_routing_key="all.collect", sensor_aliases=ALIASES)
 ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, publish_routing_key="all.collect")
 HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, publish_routing_key="all.collect")
-HB = Heartbeat("Heartbeat", "Data provider for test purposes", sch, publish_routing_key="all.collect")
 
 DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
 ORANGE.set_polling({"cron": {"minute": "0-50/10"}})
 HTU.set_polling({"cron": {"minute": "0-50/10"}})
-HB.set_polling({"cron": {"minute": "0-50/10"}})
 
 DALLAS.activate_polling()
 ORANGE.activate_polling()
 HTU.activate_polling()
-HB.activate_polling()
 
 # PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
 senders = []
