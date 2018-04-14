@@ -18,61 +18,86 @@
         return 2;
     }
 
-    function getTimeFromNow(iso_string, action_string="Обновлено") {
+
+    function parseTimestamp(iso_string) {
         var inputDate = getDateFromISO(iso_string);
-        var elapsed_minutes_total = parseInt((Date.now() - inputDate) / 1000 / 60);
-        var elapsed_hours = parseInt(elapsed_minutes_total / 60);
-        var elapsed_days = parseInt(elapsed_hours / 24);
-        var elapsed_minutes = elapsed_minutes_total - elapsed_hours * 60;
+        var retDate = {};
+        retDate.total_minutes = parseInt((Date.now() - inputDate) / 1000 / 60);
+        retDate.hours = parseInt(retDate.total_minutes / 60);
+        retDate.days = parseInt(retDate.hours / 24);
+        retDate.months = parseInt(retDate.days / 30);
+        retDate.years = parseInt(retDate.days / 365);
+        retDate.minutes = retDate.total_minutes - retDate.hours * 60;
+        return retDate;
+    }
+
+
+    function getTimeFromNow(date, action_string="Обновлено") {
         var out_str = ""
-        if (elapsed_minutes_total == 0) {
+        if (date.total_minutes == 0) {
             out_str = action_string + " менее минуты назад";
         }
-        else if (elapsed_minutes_total < 0) {
+        else if (date.total_minutes < 0) {
             out_str = "Проверьте настройки времени";
         }
         else {
-            if (elapsed_days > 0) {
-                out_str += elapsed_days;
-                switch(getCorrectEnding(elapsed_days)) {
+            if (date.months > 0) {
+                out_str += date.months;
+                switch(getCorrectEnding(date.days)) {
                     case 0:
-                        out_str += " день ";
+                        out_str += " месяц ";
                         break;
                     case 1:
-                        out_str += " дня ";
+                        out_str += " месяца ";
                         break;
                     default:
-                        out_str += " дней ";
+                        out_str += " месяцев ";
                         break;
                 }
             }
             else {
-                if (elapsed_hours > 0) {
-                    out_str += elapsed_hours;
-                    switch(getCorrectEnding(elapsed_hours)) {
+                if (date.days > 0) {
+                    out_str += date.days;
+                    switch(getCorrectEnding(date.days)) {
                         case 0:
-                            out_str += " час ";
+                            out_str += " день ";
                             break;
                         case 1:
-                            out_str += " часа ";
+                            out_str += " дня ";
                             break;
                         default:
-                            out_str += " часов ";
+                            out_str += " дней ";
                             break;
                     }
                 }
-                if (elapsed_minutes > 0) {
-                    out_str += elapsed_minutes;
-                    switch(getCorrectEnding(elapsed_minutes)) {
-                        case 0:
-                            out_str += " минуту ";
-                            break;
-                        case 1:
-                            out_str += " минуты ";
-                            break;
-                        default:
-                            out_str += " минут ";
-                            break;
+                else {
+                    if (date.hours > 0) {
+                        out_str += date.hours;
+                        switch(getCorrectEnding(date.hours)) {
+                            case 0:
+                                out_str += " час ";
+                                break;
+                            case 1:
+                                out_str += " часа ";
+                                break;
+                            default:
+                                out_str += " часов ";
+                                break;
+                        }
+                    }
+                    if (date.minutes > 0) {
+                        out_str += date.minutes;
+                        switch(getCorrectEnding(date.minutes)) {
+                            case 0:
+                                out_str += " минуту ";
+                                break;
+                            case 1:
+                                out_str += " минуты ";
+                                break;
+                            default:
+                                out_str += " минут ";
+                                break;
+                        }
                     }
                 }
             }

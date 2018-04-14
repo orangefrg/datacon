@@ -71,6 +71,7 @@
 
     function processSingleTag(tag) {
         var dsp = {
+            processed: Date.now(),
             received: "--",
             updated: "--",
             reading: "--",
@@ -87,10 +88,15 @@
             min_3h: "",
             avg_3h: "",
             enabled_3h: false,
+            obsolete_server: false,
+            obsolete_client: false
         }
         if (tag.readings.length>0) {
-            dsp.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Последнее изменение");
-            dsp.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Обновлено");
+            var t_packet = parseTimestamp(tag.readings[0].timestamp_packet);
+            var t_receive = parseTimestamp(tag.readings[0].timestamp_receive);
+            dsp.obsolete_server = t_receive.hours > 0;
+            dsp.received = getTimeFromNow(t_packet, "Последнее изменение");
+            dsp.updated = getTimeFromNow(t_receive, "Обновлено");
             dsp.reading = tag.readings[0].reading;
             if (tag.hasOwnProperty("units") && tag.units != null && tag.units != "") {
                 dsp.reading += " " + tag.units;
@@ -166,9 +172,14 @@
             var element = updateSingleTag(response.tags[k], k);
             processSingleTag(element);
         }
+        var dt = Date.now();
+        for (k=0; k<coreData.length; k++) {
+            var processedTime = parseInt((dt - coreData[k].display.processed) / 60000);
+            coreData[k].display.obsolete_client = processedTime > 3;
+        }
         diagData.request_in_progress = false;
         finDate = new Date();
         diagData.request_timing = (finDate - stDate)/1000;
-        console.log("Finished request in " + diagData.time_to_request + " seconds");     
+        console.log("Finished request in " + diagData.time_to_request + " seconds");
     }
 </script>

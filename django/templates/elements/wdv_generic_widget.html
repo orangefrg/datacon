@@ -4,7 +4,18 @@
         v-bind:id="'widget-' + rdg.id">
         <div class="card-body"
             v-bind:class="rdg.display.alert_state != null ? 'text-' + rdg.display.alert_state : ''">
-            <h5 class="card-title data-tag-name">(( rdg.display_name ))</h5>
+            <h5 class="card-title data-tag-name">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-10">
+                            (( rdg.display_name ))
+                        </div>
+                        <div class="col-1">
+                            <span v-if="rdg.display.obsolete_server || rdg.display.obsolete_client" class="oi oi-warning text-danger" title="Данные могли устареть"></span>
+                        </div>
+                    </div>
+                </div>
+            </h5>
             <div class="container-fluid">
                 <div class="row">
                     <div class="col">

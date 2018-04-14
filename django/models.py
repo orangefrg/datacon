@@ -311,9 +311,9 @@ class ViewSet(models.Model):
     uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name="Идентификатор")
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     name = models.CharField(max_length=200, verbose_name="Название")
-    tags_numeric = models.ManyToManyField(TagNumeric, verbose_name="Численные тэги", related_name="viewsets")
-    tags_discrete = models.ManyToManyField(TagDiscrete, verbose_name="Дискретные тэги", related_name="viewsets")
-    tags_text = models.ManyToManyField(TagText, verbose_name="Текстовые тэги", related_name="viewsets")
+    tags_numeric = models.ManyToManyField(TagNumeric, blank=True, verbose_name="Численные тэги", related_name="viewsets")
+    tags_discrete = models.ManyToManyField(TagDiscrete, blank=True, verbose_name="Дискретные тэги", related_name="viewsets")
+    tags_text = models.ManyToManyField(TagText, blank=True, verbose_name="Текстовые тэги", related_name="viewsets")
 
     class Meta:
         ordering = ['name']
