@@ -107,6 +107,7 @@ class Tag(models.Model):
 
     def get_range_of_values(self, date_start=None, date_end=None, only_valid=True, max_number=MAXIMUM_VALUES_NUMBER, bound_earlier=True):
         kw = {}
+        vals = {}
         if max_number > MAXIMUM_VALUES_NUMBER:
             max_number = MAXIMUM_VALUES_NUMBER
         if only_valid:
