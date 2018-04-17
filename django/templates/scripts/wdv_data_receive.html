@@ -71,6 +71,58 @@
         return element;
     }
 
+    function generateGrid(limits_time, limits_value, ticks_value=10, ticks_time=10) {
+        var span_value = limits_value[1] - limits_value[0];
+        var single_tick = span_value / ticks_value;
+        var suggested_tick = 1;
+        var stopFlag = false;
+        var suggested_next = 1;
+        var grid_value = [];
+        var grid_time = [];
+        var five = true;
+        while(!stopFlag) {
+            if (single_tick >= 1) {
+                if(span_value / suggested_tick <= 20) {
+                    stopFlag = true;
+                }
+                if (five) {
+                    suggested_tick *= 5;
+                }
+                else {
+                    suggested_tick *= 2;
+                }
+            }
+            else {
+                if(span_value / suggested_tick >= 2) {
+                    stopFlag = true;
+                }
+                if (five) {
+                    suggested_tick /= 2;
+                }
+                else {
+                    suggested_tick /= 5;
+                }
+            }
+            five = !five;
+        }
+        var lower_value = Math.floor(limits_value[0] * suggested_tick) / suggested_tick;
+        var upper_value = Math.ceil(limits_value[1] * suggested_tick) / suggested_tick;
+        for (i = upper_value; i >= lower_value; i -= suggested_tick) {
+            var val = Math.round(i / suggested_tick) * suggested_tick;
+            if (suggested_tick < 1) {
+                val = val.toFixed(-Math.log10(suggested_tick));
+            }
+            else {
+                val = Math.round(val);
+            }
+            var grid_line = graphHeight - (val - limits_value[0]) / (limits_value[1] - limits_value[0]) * (graphHeight - 10) - 5;
+            if (grid_line <= graphHeight) {
+                grid_value.push([grid_line, val]);
+            }
+        }
+        return grid_value;
+    }
+
     function processSingleTag(tag) {
         var dsp = {
             processed: Date.now(),
@@ -178,17 +230,15 @@
                             if (max_time == undefined || t_stamp > max_time) {
                                 max_time = t_stamp;
                             }
-                            values.push(val);
-                            timestamps.push(t_stamp);
+                            values.push([val, null, t_stamp, null]);
                         }
                     }
-                    var span_y = max_val - min_val;
-                    var span_x = max_time - min_time;
                     for (i = values.length - 1; i >= 0; i--) {
-                        var norm_val = graphHeight - (values[i] - min_val) / (max_val - min_val) * graphHeight;
-                        var norm_time = (timestamps[i] - min_time) / (max_time - min_time) * graphWidth;
-                        dsp.graph += norm_time + ", " + norm_val + "\n";
+                        values[i][1] = graphHeight - (values[i][0] - min_val) / (max_val - min_val) * (graphHeight - 10) - 5;
+                        values[i][3] = (values[i][2] - min_time) / (max_time - min_time) * graphWidth;
+                        dsp.graph += values[i][3] + ", " + values[i][1] + "\n";
                     }
+                    dsp.graph_grid_x = generateGrid([min_time, max_time], [min_val, max_val]);
                 }
             }
         }
@@ -221,7 +271,7 @@
         }
         diagData.request_in_progress = false;
         finDate = new Date();
-        diagData.request_timing = (finDate - stDate)/1000;
-        console.log("Finished request in " + diagData.time_to_request + " seconds");
+        diagData.request_timing = (finDate - diagData.request_start)/1000;
+        console.log("Finished request in " + diagData.request_timing + " seconds");
     }
 </script>

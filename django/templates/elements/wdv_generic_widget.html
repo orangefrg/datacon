@@ -160,11 +160,24 @@
                     </g>
                     <g class="grid y-grid" id="yGrid">
                         <line x1="0" x2="300" y1="120" y2="120" stroke="#111111"></line>
+                        <line v-for="xline in rdg.display.graph_grid_x"
+                            x1="0"
+                            x2="300"
+                            v-bind:y1="xline[0]"
+                            v-bind:y2="xline[0]"
+                            stroke="#AAAAAA"></line>
+                    </g>
+                    <g class="labels y-labels">
+                        <text v-for="(xline, index) in rdg.display.graph_grid_x"
+                           v-if="rdg.display.graph_grid_x.length < 10 || index % 2 != 0"
+                           font-size="10"
+                           x="10"
+                           v-bind:y="xline[0] + 4">(( xline[1] ))</text>
                     </g>
                     <polyline
                        fill="none"
                        stroke="#0000ff"
-                       stroke-width="0.75"
+                       stroke-width="1.2"
                        v-bind:points="rdg.display.graph"
                      />
                 </svg>
