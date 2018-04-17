@@ -128,6 +128,7 @@ def _validate_parameters(settings):
 
 
 def process_request(request_post):
+    setting = None
     stage = "decoding request"
     result = None
     try:

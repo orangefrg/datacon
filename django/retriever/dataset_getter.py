@@ -120,7 +120,7 @@ def get_viewset_latest(viewset_id,
 
 def get_viewset_range(viewset_id,
                       date_start=None,
-                      date_end=datetime.now(),
+                      date_end=None,
                       number=50,
                       only_valid=True,
                       round_numerics=2,

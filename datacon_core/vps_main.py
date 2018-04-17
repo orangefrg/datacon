@@ -3,6 +3,7 @@ import datetime
 import json
 import sys
 from data_providers.vps_selfdiag import VPSSelfDiag
+from data_providers.nix_network import ConnectionMon
 from data_collectors.sender import JSONSender
 from rmq_config import initial_config
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -15,9 +16,28 @@ initial_config()
 sch = BackgroundScheduler()
 sch.start()
 
-VPS = VPSSelfDiag("VPS-Z", "Zomro VPS self-diag", sch, publish_routing_key="all.collect")
+VPS = VPSSelfDiag("VPS-Z", "VPS self-diag", sch, publish_routing_key="all.collect", if_name="ens3",
+                  if_alias = "IP-1", free_space_path="/")
+NET_1 = ConnectionMon("VPS-Z", "VPS network 1", sch,
+                      publish_routing_key="all.collect", connection_filter={
+                                        "alias_if": "IP-1",
+                                        "alias_conn": shared_config.ALIAS_1,
+                                        "iface": shared_config.NET_IF,
+                                        "port": shared_config.NET_PORT_1
+                                })
+NET_2 = ConnectionMon("VPS-Z", "VPS network 2", sch,
+                      publish_routing_key="all.collect", connection_filter={
+                                        "alias_if": "IP-1",
+                                        "alias_conn": shared_config.ALIAS_2,
+                                        "iface": shared_config.NET_IF,
+                                        "port": shared_config.NET_PORT_2
+                                })
 VPS.set_polling({"cron": {"minute": "0-50/10"}})
+NET_1.set_polling({"cron": {"minute": "6-56/10"}})
+NET_2.set_polling({"cron": {"minute": "7-57/10"}})
 VPS.activate_polling()
+NET_1.activate_polling()
+NET_2.activate_polling()
 
 senders = []
 for i in range(3):
