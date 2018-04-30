@@ -33,12 +33,12 @@ NET_2 = ConnectionMon("VPS-Z", "VPS network 2", sch,
                                         "port": shared_config.NET_PORT_2
                                 })
 # NET_3 = ConnectionMon("VPS-Z", "VPS network 3", sch,
-                      publish_routing_key="all.collect", connection_filter={
-                                        "alias_if": "IP-1",
-                                        "alias_conn": shared_config.ALIAS_3,
-                                        "iface": shared_config.NET_IF,
-                                        "port": shared_config.NET_PORT_3
-                                })
+#                      publish_routing_key="all.collect", connection_filter={
+#                                        "alias_if": "IP-1",
+#                                        "alias_conn": shared_config.ALIAS_3,
+#                                        "iface": shared_config.NET_IF,
+#                                        "port": shared_config.NET_PORT_3
+#                                })
 VPS.set_polling({"cron": {"minute": "0-50/10"}})
 NET_1.set_polling({"cron": {"minute": "2-52/10"}})
 NET_2.set_polling({"cron": {"minute": "3-53/10"}})
