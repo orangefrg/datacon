@@ -71,18 +71,17 @@
         return element;
     }
 
-    function generateGrid(limits_time, limits_value, ticks_value=10, ticks_time=10) {
+    function generateGridValues(limits_value, ticks_value=10, max_ticks=20, min_ticks=2) {
         var span_value = limits_value[1] - limits_value[0];
         var single_tick = span_value / ticks_value;
         var suggested_tick = 1;
         var stopFlag = false;
         var suggested_next = 1;
         var grid_value = [];
-        var grid_time = [];
         var five = true;
         while(!stopFlag) {
             if (single_tick >= 1) {
-                if(span_value / suggested_tick <= 20) {
+                if(span_value / suggested_tick <= max_ticks) {
                     stopFlag = true;
                 }
                 if (five) {
@@ -93,7 +92,7 @@
                 }
             }
             else {
-                if(span_value / suggested_tick >= 2) {
+                if(span_value / suggested_tick >= min_ticks) {
                     stopFlag = true;
                 }
                 if (five) {
@@ -121,6 +120,32 @@
             }
         }
         return grid_value;
+    }
+
+    function generateGridTime(limits_time, ticks_time=10, max_ticks=20, min_ticks=2) {
+        var span_time = limits_time[1] - limits_time[0];
+        var single_tick = span_time / ticks_time;
+        var suggested_tick = 1000;
+        var stopFlag = false;
+        var suggested_next = 1000;
+        var mulitpliers = [5, 2, 3, 2, 5, 2, 3, 2, 3, 2, 2, 2, 7, 5, 10];
+        for (i=0;i<mulitpliers.length;i++) {
+            if (span_value / suggested_tick <= min_ticks && span_value / suggested_tick >= max_ticks) {
+                stopFlag = true;
+                break;
+            }
+            suggested_tick *= mulitpliers[i];
+        }
+        if (!stopFlag) {
+            if (single_tick < 1000) {
+                suggested_tick = 500;
+            }
+            else {
+                // 5 years
+                suggested_tick = 157784630000;
+            }
+        }
+        // TODO: conversion from ms to human-readable dates
     }
 
     function processSingleTag(tag) {
@@ -238,7 +263,7 @@
                         values[i][3] = (values[i][2] - min_time) / (max_time - min_time) * graphWidth;
                         dsp.graph += values[i][3] + ", " + values[i][1] + "\n";
                     }
-                    dsp.graph_grid_x = generateGrid([min_time, max_time], [min_val, max_val]);
+                    dsp.graph_grid_x = generateGridValues([min_val, max_val]);
                 }
             }
         }

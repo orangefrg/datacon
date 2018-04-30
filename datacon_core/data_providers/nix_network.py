@@ -38,17 +38,29 @@ class ConnectionMon(Provider):
                 "measured_parameter": "is_listening_{}".format(tag_subname),
                 "type": "Discrete",
                 "reading": False }
+        ip_connected = { "name": "Network.{}".format(tag_name),
+                "units": "",
+                "measured_parameter": "clients_{}".format(tag_subname),
+                "type": "Numeric",
+                "reading": 0 }
+        client_ips = []
         for conn in psutil.net_connections():
-            port = conn.laddr.port
-            addr = conn.laddr.ip
-            port_pass = port == self._port or self._port is None
-            ip_pass = addr in self._ip_addresses or len(self._ip_addresses) == 0
-            if port_pass and ip_pass:
-                if conn.status == "ESTABLISHED":
-                    connection_counter["reading"] += 1
-                elif conn.status == "LISTEN":
-                    is_listening["reading"] = True
-        res_list = [connection_counter, is_listening]
+            laddr_fields = conn.laddr._fields
+            if(type(conn.laddr) == psutil._common.addr and "port" in laddr_fields and "ip" in laddr_fields):
+                port = conn.laddr.port
+                addr = conn.laddr.ip
+                port_pass = port == self._port or self._port is None
+                ip_pass = addr in self._ip_addresses or len(self._ip_addresses) == 0
+                if port_pass and ip_pass:
+                    if conn.status == "ESTABLISHED":
+                        connection_counter["reading"] += 1
+                        if (type(conn.raddr) == psutil._common.addr and "ip" in conn.raddr._fields):
+                            if conn.raddr.ip not in client_ips:
+                                client_ips.append(conn.raddr.ip)
+                    elif conn.status == "LISTEN":
+                        is_listening["reading"] = True
+        ip_connected["reading"] = len(client_ips)
+        res_list = [connection_counter, is_listening, ip_connected]
         return res_list
 
 # Overriding defaults
