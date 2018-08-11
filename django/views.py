@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.template import loader
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from .receiver.receiver import process_message
 from .retriever.request_processor import process_request
 from datetime import datetime
@@ -19,7 +19,7 @@ def web_data_view(request, dataset_id):
     context = {"dataset_id": dataset_id, "page_name": "Data web view", "page_description": "View data online"}
     return HttpResponse(template.render(context, request))
 
-def data_request(request):
+def data_request_core(request):
     if request.method != "POST":
         return HttpResponse(status=400)
     else:
@@ -30,5 +30,14 @@ def data_request(request):
             return JsonResponse(rsp)
 
 
-    
-    
+@csrf_exempt
+def data_request(request):
+    @csrf_protect
+    def foreign_data_request(request):
+        return data_request_core(request)
+
+    if request.META["REMOTE_ADDR"] != "127.0.0.1":
+        return foreign_data_request(request)
+    else:
+        return data_request_core(request)
+

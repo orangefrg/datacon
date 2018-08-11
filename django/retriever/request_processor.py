@@ -135,19 +135,24 @@ def process_request(request_post):
         settings = json.loads(request_post["settings"])
         stage = "getting settings"
         params = _validate_parameters(settings)
+        stage = "determining mode"
         data_type, query_type = _determine_mode(params)
         if data_type == DATASET_DATA:
             if query_type == LATEST_QUERY:
+                stage = "querying dataset (latest)"
                 result = get_viewset_latest(**params)
             elif query_type == RANGE_QUERY:
+                stage = "querying dataset (range)"
                 result = get_viewset_range(**params)
             else:
                 stage = "Getting dataset"
                 raise Exception("Unknown query type")
         elif data_type == TAGS_DATA:
             if query_type == LATEST_QUERY:
+                stage = "querying tags (latest)"
                 result = get_tags_latest_by_names(**params)
             elif query_type == RANGE_QUERY:
+                stage = "querying tags (range)"
                 result = get_tags_range_by_names(**params)
             else:
                 stage = "Getting tags"

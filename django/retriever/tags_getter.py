@@ -89,7 +89,7 @@ def _find_tags(input_tag_names):
         found = False
         for t in [TagDiscrete, TagNumeric, TagText]:
             try:
-                tags.append(t.objects.get(data_source__uid=i["datasource"], name=i["name"]))
+                tags.append(t.objects.get(data_source__uid=i["datasource_id"], name=i["name"]))
                 found = True
                 break
             except ObjectDoesNotExist:
