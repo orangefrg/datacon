@@ -84,11 +84,11 @@ class Collector:
                               on_open_error_callback=self._on_error_connection)
         self.log_message("Starting main IO loop", logging.DEBUG)
         self._connection.ioloop.start()
-
+    # Broker could be: "amqp" or "redis"
     # If no routing keys are provided, EVERY message ending with ".collect" will be accepted
     # Queues are declared automatically, as well as bindings
     # Be sure to remove abandoned ones
-    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], amqp=True, loglevel=logging.DEBUG):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", loglevel=logging.DEBUG):
         self._name = name
         self._loglevel = loglevel
         self._description = description
@@ -100,7 +100,7 @@ class Collector:
                     20: (self._logger.info, "Info"),
                     10: (self._logger.debug, "Debug")}
         self._logger.info("{} is being initialized".format(self._name))
-        if amqp:
+        if broker == "amqp":
             self._queue_name = "{}.collectq".format(name) if queue_name_prefix is None else "{}.collectq".format(queue_name_prefix)
             self._consumer_tag = ""
             self._routing_keys = ["*"] if routing_keys is None or len(routing_keys) == 0 else routing_keys
