@@ -24,15 +24,18 @@ class Provider:
 
 
     def _revoke_channel(self):
-        self.log_message("Connecting to AMQP broker...", logging.DEBUG)
+        self.log_message("Connecting to RabbitMQ...", logging.DEBUG)
         try:
             self._connection = BlockingConnection()
             self._channel = self._connection.channel()
         except:
             self.log_message("Connection failed: {}".format(sys.exc_info()[0]), logging.ERROR)
         self.log_message("Connection OK", logging.DEBUG)
-            
-    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+
+    # broker can be: "amqp", "redis", "direct". If direct, 'pass_to' needs to be specified
+    allowed_brokers = ["amqp", "redis", "direct"]
+
+    def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
                  command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
         self._sched = scheduler
         self._name = name
@@ -46,9 +49,10 @@ class Provider:
                            20: (self._logger.info, "Info"),
                            10: (self._logger.debug, "Debug")}
         self.log_message("{} is being initialized".format(self._name), logging.INFO)
-        self._invalid_config = not amqp and (pass_to is None or len(pass_to) == 0)
+        self._invalid_config = broker not in self.allowed_brokers
+        self._broker = broker
 
-        if amqp:
+        if broker == "amqp":
             self.log_message("Setting up AMQP", logging.INFO)
             self._pass_to = None
             self._publish_routing_key = publish_routing_key
@@ -67,8 +71,10 @@ class Provider:
                     self.log_message("Queue declaring failed: {}".format(sys.exc_info()[0]), logging.ERROR)
             self._connection.close()
             self.log_message("AMQP connection OK", logging.INFO)
-        else:
-            self.log_message("No AMQP - passing mode enabled", logging.WARNING)
+        elif broker == "redis":
+            self.log_message("Setting up Redis", logging.INFO)
+        elif broker == "direct":
+            self.log_message("Direct passing mode enabled", logging.WARNING)
             self._pass_to = pass_to
 
     def get_name(self):
@@ -107,12 +113,14 @@ class Provider:
         current_rdg = self._start_message()
         current_rdg["reading"].extend(self.get_current_reading())
         current_data = json.dumps(self._finalize_message(current_rdg))
-        if not self._invalid_config and self._pass_to is None:
+        if self._broker == "amqp":
             self.log_message("Revoking channel", logging.DEBUG)
             self._revoke_channel()
             self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, current_data)
             self._connection.close()
-        else:
+        elif self._broker == "redis":
+            pass
+        elif self._broker == "direct" and self._pass_to is not None:
             self.log_message("Sending in simple way", logging.DEBUG)
             for collector in self._pass_to:
                 collector.upload_data(current_data)

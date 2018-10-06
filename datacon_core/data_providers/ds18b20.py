@@ -32,7 +32,7 @@ class Ds18b20(Provider):
                     self._add_sensor(f)
 
 
-    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
+    def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
                  command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
@@ -40,7 +40,7 @@ class Ds18b20(Provider):
         self._crc_re = re.compile("(YES|NO)")
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
-        super().__init__(name, description, scheduler, amqp, publish_routing_key,
+        super().__init__(name, description, scheduler, broker, publish_routing_key,
                          command_routing_keys, pass_to, loglevel)
         self._refresh_sensors_list()
 
