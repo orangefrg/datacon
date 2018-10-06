@@ -17,7 +17,8 @@ import logging
 
 logging.basicConfig(filename='datacon_main.log', level=logging.WARNING)
 
-initial_config()
+# initial_config()
+
 sch = BackgroundScheduler()
 sch.start()
 
@@ -31,9 +32,9 @@ sch.start()
 ALIASES = {"28-0000043a174f": "Outside",
            "28-0000041b3610": "Inside"}
 
-DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, publish_routing_key="all.collect", sensor_aliases=ALIASES)
-ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, publish_routing_key="all.collect")
-HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, publish_routing_key="all.collect")
+DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, sensor_aliases=ALIASES, broker="redis")
+ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, broker="redis")
+HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, broker="redis")
 
 DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
 ORANGE.set_polling({"cron": {"minute": "0-50/10"}})
@@ -43,11 +44,11 @@ DALLAS.activate_polling()
 ORANGE.activate_polling()
 HTU.activate_polling()
 
-# PRINTER = SimplePrinter("printer", "Default console printer", ["all", "printer"])
+# PRINTER = SimplePrinter("printer", "Default console printer", broker="redis")
 senders = []
-for i in range(10):
-        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"],
-                                  address=shared_config.URL_TO_SEND, cert=shared_config.CERT_FILE))
+for i in range(1):
+    senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender",
+                              address=shared_config.URL_TO_SEND, cert=shared_config.CERT_FILE, broker="redis"))
 # WRITER = SimpleFileWrite("writer", "Deafult file writer", ["all", "writer"], False, "test_with_rabbit")
 
 # DALLAS.set_polling({"cron": {"minute": "0-50/10"}}, [WRITER, PRINTER])
@@ -60,9 +61,7 @@ for i in range(10):
 
 
 try:
-        while True:
-                time.sleep(5)
+    while True:
+        time.sleep(5)
 except KeyboardInterrupt:
         print("End")
-        
-        

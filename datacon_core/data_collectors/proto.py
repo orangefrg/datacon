@@ -137,6 +137,7 @@ class Collector:
             for r in self._redis_channels:
                 self._redis_pubsub.psubscribe(**{r: self._main_redis_callback})
             self._ct = self._redis_pubsub.run_in_thread(sleep_time=1)
+            self.log_message("Subscribing to Redis OK", logging.INFO) 
 
 
     def _process_message(self, message):
