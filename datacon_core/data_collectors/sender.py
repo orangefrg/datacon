@@ -12,12 +12,12 @@ urllib3.disable_warnings(urllib3.exceptions.SecurityWarning)
 class JSONSender(Collector):
 
     def __init__(self, name, description, queue_name_prefix=None, routing_keys=[],
-                 broker="amqp", loglevel=logging.DEBUG, address="http://127.0.0.1",
+                 broker="amqp", redis_channels=[], loglevel=logging.DEBUG, address="http://127.0.0.1",
                  cert=False):
         self._address = address
         self._cert = cert
         self._threads = []
-        super().__init__(name, description, queue_name_prefix, routing_keys, broker, loglevel)     
+        super().__init__(name, description, queue_name_prefix, routing_keys, broker, redis_channels, loglevel)     
 
     def upload_data(self, data):
         self.log_message("Trying to upload: {}".format(data), logging.DEBUG) 

@@ -1,4 +1,4 @@
-import sched, time
+import sched, time, redis
 from pika import BlockingConnection
 import json
 import logging
@@ -36,7 +36,7 @@ class Provider:
     allowed_brokers = ["amqp", "redis", "direct"]
 
     def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG):
         self._sched = scheduler
         self._name = name
         self._description = description
@@ -73,6 +73,8 @@ class Provider:
             self.log_message("AMQP connection OK", logging.INFO)
         elif broker == "redis":
             self.log_message("Setting up Redis", logging.INFO)
+            self._redis = redis.StrictRedis()
+            self._redis_channel = redis_channel
         elif broker == "direct":
             self.log_message("Direct passing mode enabled", logging.WARNING)
             self._pass_to = pass_to
@@ -108,22 +110,31 @@ class Provider:
     def get_current_reading(self, src_id=None):
         raise NotImplementedError
 
+    def _send_amqp(self, message):
+        self.log_message("Revoking channel", logging.DEBUG)
+        self._revoke_channel()
+        self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, message)
+        self._connection.close()
+    
+    def _send_redis(self, message):
+        self._redis.publish(self._redis_channel, message)
+
+    def _send_direct(self, message):
+        self.log_message("Sending in simple way", logging.DEBUG)
+        for collector in self._pass_to:
+            collector.upload_data(message)
+
     def _poll_current_reading(self):
         self.log_message("Time to get data and send it", logging.DEBUG)
         current_rdg = self._start_message()
         current_rdg["reading"].extend(self.get_current_reading())
         current_data = json.dumps(self._finalize_message(current_rdg))
         if self._broker == "amqp":
-            self.log_message("Revoking channel", logging.DEBUG)
-            self._revoke_channel()
-            self._channel.publish(DEFAULT_EXCHANGE, self._publish_routing_key, current_data)
-            self._connection.close()
+            self._send_amqp(current_data)
         elif self._broker == "redis":
-            pass
+            self._send_redis(current_data)
         elif self._broker == "direct" and self._pass_to is not None:
-            self.log_message("Sending in simple way", logging.DEBUG)
-            for collector in self._pass_to:
-                collector.upload_data(current_data)
+            self._send_direct(current_data)
 
     # Activate and deactivate scheduled data retrieval
     # time_settings is a dict with following fields:

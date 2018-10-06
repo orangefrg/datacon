@@ -4,9 +4,9 @@ import re, os, logging, psutil, sys, socket
 class LinuxSelfDiagProto(Provider):
 
     def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG):
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG):
         super().__init__(name, description, scheduler, broker, publish_routing_key,
-                         command_routing_keys, pass_to, loglevel)
+                         command_routing_keys, redis_channel, pass_to, loglevel)
 
     def _get_free_space(self, path="/"):
         res_list = []

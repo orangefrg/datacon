@@ -4,13 +4,13 @@ import logging
 class VPSSelfDiag(LinuxSelfDiagProto):
 
     def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG,
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG,
                  if_name="lo", if_alias="localhost", free_space_path="/"):
         self._if_name = if_name
         self._if_alias = if_alias
         self._free_space_path = free_space_path
         super().__init__(name, description, scheduler, broker, publish_routing_key,
-                         command_routing_keys, pass_to, loglevel)
+                         command_routing_keys, redis_channel, pass_to, loglevel)
         self.log_message("Initializing self-diagnostics for VPS", logging.INFO)
 
 # Overriding defaults

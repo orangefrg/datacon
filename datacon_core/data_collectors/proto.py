@@ -1,4 +1,4 @@
-import pika, json, threading
+import pika, redis, json, threading
 import logging
 from datetime import datetime
 
@@ -84,11 +84,34 @@ class Collector:
                               on_open_error_callback=self._on_error_connection)
         self.log_message("Starting main IO loop", logging.DEBUG)
         self._connection.ioloop.start()
+
+    # Redis callbacks
+    def _receive_redis_data(self, channel, data):
+        if not self.upload_data(data):
+            self._redis.publish(channel, data)
+            self.log_message("Error sending message", logging.WARNING)
+
+    def _receive_redis_subscribe(self, channel):
+        self.log_message("Subscribed to redis channel {}".format(channel), logging.INFO)
+
+    def _receive_redis_unsubscribe(self, channel):
+        self.log_message("Unsubscribed from redis channel {}".format(channel), logging.INFO)
+
+    def _main_redis_callback(self, message):
+        if message:
+            self.log_message("Message received: {}".format(message), logging.DEBUG)
+            if message["type"] in ["subscribe", "psubscribe"]:
+                self._receive_redis_subscribe(message["channel"])
+            elif message["type"] in ["unsubscribe", "punsubscribe"]:
+                self._receive_redis_unsubscribe(message["channel"])
+            else:
+                self._receive_redis_data(message["channel"], message["data"])
+
     # Broker could be: "amqp" or "redis"
     # If no routing keys are provided, EVERY message ending with ".collect" will be accepted
     # Queues are declared automatically, as well as bindings
     # Be sure to remove abandoned ones
-    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", loglevel=logging.DEBUG):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", redis_channels=[], loglevel=logging.DEBUG):
         self._name = name
         self._loglevel = loglevel
         self._description = description
@@ -106,6 +129,15 @@ class Collector:
             self._routing_keys = ["*"] if routing_keys is None or len(routing_keys) == 0 else routing_keys
             self._ct = CollectorThread(self)
             self._ct.start()
+        elif broker == "redis":
+            self._redis = redis.StrictRedis()
+            self._redis_channels = redis_channels
+            self._redis_pubsub = self._redis.pubsub()
+            self._redis_pubsub.subscribe(**{"all": self._main_redis_callback})
+            for r in self._redis_channels:
+                self._redis_pubsub.psubscribe(**{r: self._main_redis_callback})
+            self._ct = self._redis_pubsub.run_in_thread(sleep_time=1)
+
 
     def _process_message(self, message):
         return json.loads(message)

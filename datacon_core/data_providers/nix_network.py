@@ -6,14 +6,14 @@ import logging
 class ConnectionMon(Provider):
 
     def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG,
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG,
                  connection_filter={}):
         self._iface = connection_filter.get("iface")
         self._port = connection_filter.get("port")
         self._alias_conn = connection_filter.get("alias_conn")
         self._alias_if = connection_filter.get("alias_if")
         super().__init__(name, description, scheduler, broker, publish_routing_key,
-                         command_routing_keys, pass_to, loglevel)
+                         command_routing_keys, redis_channel, pass_to, loglevel)
         self.log_message("Initializing network connection diagnostics", logging.INFO)
 
     def _check_iface_address(self):

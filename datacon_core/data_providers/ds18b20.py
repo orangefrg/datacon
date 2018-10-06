@@ -33,7 +33,7 @@ class Ds18b20(Provider):
 
 
     def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG, sensor_aliases={}):
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
         
@@ -41,7 +41,7 @@ class Ds18b20(Provider):
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
         super().__init__(name, description, scheduler, broker, publish_routing_key,
-                         command_routing_keys, pass_to, loglevel)
+                         command_routing_keys, redis_channel, pass_to, loglevel)
         self._refresh_sensors_list()
 
 

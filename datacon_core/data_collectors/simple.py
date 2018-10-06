@@ -5,9 +5,9 @@ import logging
 
 class SimplePrinter(Collector):
 
-    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", loglevel=logging.DEBUG, process_as_json=True):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", redis_channels=[], loglevel=logging.DEBUG, process_as_json=True):
         self._process_as_json = process_as_json
-        super().__init__(name, description, queue_name_prefix, routing_keys, broker, loglevel)
+        super().__init__(name, description, queue_name_prefix, routing_keys, broker, redis_channels, loglevel)
 
     def upload_data(self, data):
         data = str(data, 'utf-8')
@@ -20,10 +20,10 @@ class SimplePrinter(Collector):
 
 class SimpleFileWrite(Collector):
 
-    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", logging=logging.DEBUG, process_as_json=True, filename=None):
+    def __init__(self, name, description, queue_name_prefix=None, routing_keys=[], broker="amqp", redis_channels=[], logging=logging.DEBUG, process_as_json=True, filename=None):
         self._filename = filename if filename is not None else "simple_file_write"
         self._process_as_json = process_as_json
-        super().__init__(name, description, queue_name_prefix, routing_keys, broker, logging)
+        super().__init__(name, description, queue_name_prefix, routing_keys, broker, redis_channels, logging)
 
     def upload_data(self, data):
         data = str(data, 'utf-8')
