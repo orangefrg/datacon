@@ -167,6 +167,9 @@ class HTU21D(Provider):
             self._bus = SMBus(bus_number)
             self._heater_operation = self.HEATER_OPERATION
             self._heater_cooldown = self.HEATER_COOLDOWN
+            self._last_humidity = None
+            self._last_temperature = None
+            self._heater_status = None
         except:
             self.log_message("I2C bus init failed: {}".format(sys.exc_info()[0]), logging.ERROR)
 
