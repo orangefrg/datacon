@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import time
 import datetime
 import json
@@ -12,28 +14,28 @@ import logging
 
 logging.basicConfig(filename='datacon_main.log', level=logging.WARNING)
 
-initial_config()
+# initial_config()
 sch = BackgroundScheduler()
 sch.start()
 
-VPS = VPSSelfDiag("VPS-Z", "VPS self-diag", sch, publish_routing_key="all.collect", if_name="ens3",
+VPS = VPSSelfDiag("VPS-Z", "VPS self-diag", sch, broker="redis", if_name="ens3",
                   if_alias = "IP-1", free_space_path="/")
 NET_1 = ConnectionMon("VPS-Z", "VPS network 1", sch,
-                      publish_routing_key="all.collect", connection_filter={
+                      broker="redis", connection_filter={
                                         "alias_if": "IP-1",
                                         "alias_conn": shared_config.ALIAS_1,
                                         "iface": shared_config.NET_IF,
                                         "port": shared_config.NET_PORT_1
                                 })
 NET_2 = ConnectionMon("VPS-Z", "VPS network 2", sch,
-                      publish_routing_key="all.collect", connection_filter={
+                      broker="redis", connection_filter={
                                         "alias_if": "IP-1",
                                         "alias_conn": shared_config.ALIAS_2,
                                         "iface": shared_config.NET_IF,
                                         "port": shared_config.NET_PORT_2
                                 })
 # NET_3 = ConnectionMon("VPS-Z", "VPS network 3", sch,
-#                      publish_routing_key="all.collect", connection_filter={
+#                      broker="redis", connection_filter={
 #                                        "alias_if": "IP-1",
 #                                        "alias_conn": shared_config.ALIAS_3,
 #                                        "iface": shared_config.NET_IF,
@@ -49,12 +51,13 @@ NET_2.activate_polling()
 # NET_3.activate_polling()
 
 senders = []
-for i in range(3):
-        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"], address=shared_config.URL_TO_SEND))
+for i in range(1):
+        senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender", ["all", "sender"], address=shared_config.URL_TO_SEND,       
+                                  broker="redis"))
 
 try:
         while True:
-                time.sleep(5)
+                time.sleep(50)
 except KeyboardInterrupt:
         print("End")
         

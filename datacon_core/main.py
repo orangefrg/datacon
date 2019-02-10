@@ -7,6 +7,7 @@ import sys
 from data_providers.ds18b20 import Ds18b20
 from data_providers.opi_selfdiag import OrangePiSelfDiag
 from data_providers.htu21d import HTU21D
+from data_providers.bme280 import BME280
 from data_providers.heartbeat import Heartbeat
 from data_collectors.simple import SimplePrinter, SimpleFileWrite
 from data_collectors.sender import JSONSender
@@ -35,14 +36,17 @@ ALIASES = {"28-0000043a174f": "Outside",
 DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, sensor_aliases=ALIASES, broker="redis")
 ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, broker="redis")
 HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, broker="redis")
+BME_IN = BME280("BME", "BME280: temperature, humidity and pressure", sch, broker="redis")
 
 DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
 ORANGE.set_polling({"cron": {"minute": "0-50/10"}})
 HTU.set_polling({"cron": {"minute": "0-50/10"}})
+BME_IN.set_polling({"cron": {"minute": "1-51/10"}})
 
 DALLAS.activate_polling()
 ORANGE.activate_polling()
 HTU.activate_polling()
+BME_IN.activate_polling()
 
 # PRINTER = SimplePrinter("printer", "Default console printer", broker="redis")
 senders = []

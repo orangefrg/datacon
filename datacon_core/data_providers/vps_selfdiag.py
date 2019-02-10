@@ -19,4 +19,6 @@ class VPSSelfDiag(LinuxSelfDiagProto):
         reading = []
         reading.extend(self._get_free_space(self._free_space_path))
         reading.extend(self._get_net_stats(self._if_name, self._if_alias))
+        reading.extend(self._get_cpu_usage())
+        reading.extend(self._get_ram_usage())
         return reading
