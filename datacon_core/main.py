@@ -16,7 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import shared_config
 import logging
 
-logging.basicConfig(filename='datacon_main.log', level=logging.WARNING)
+logging.basicConfig(filename='datacon_main.log', level=logging.DEBUG)
 
 # initial_config()
 
@@ -36,7 +36,7 @@ ALIASES = {"28-0000043a174f": "Outside",
 DALLAS = Ds18b20("DS1", "Local dallas sensors", sch, sensor_aliases=ALIASES, broker="redis")
 ORANGE = OrangePiSelfDiag("OPi1", "Orange Pi one and only", sch, broker="redis")
 HTU = HTU21D("GY-21", "Temperature and humidity measurement", sch, broker="redis")
-BME_IN = BME280("BME", "BME280: temperature, humidity and pressure", sch, broker="redis")
+BME_IN = BME280("BME.Inside", "Temperature, humidity and pressure inside", sch, broker="redis", loglevel=logging.DEBUG)
 
 DALLAS.set_polling({"cron": {"minute": "0-50/10"}})
 ORANGE.set_polling({"cron": {"minute": "0-50/10"}})
@@ -48,11 +48,11 @@ ORANGE.activate_polling()
 HTU.activate_polling()
 BME_IN.activate_polling()
 
-# PRINTER = SimplePrinter("printer", "Default console printer", broker="redis")
+#PRINTER = SimplePrinter("printer", "Default console printer", broker="redis")
 senders = []
 for i in range(1):
     senders.append(JSONSender("json-sender-{}".format(i), "Simple JSON HTTP(S) sender", "json-sender",
-                              address=shared_config.URL_TO_SEND, cert=shared_config.CERT_FILE, broker="redis"))
+                              address=shared_config.URL_TO_SEND, broker="redis"))
 # WRITER = SimpleFileWrite("writer", "Deafult file writer", ["all", "writer"], False, "test_with_rabbit")
 
 # DALLAS.set_polling({"cron": {"minute": "0-50/10"}}, [WRITER, PRINTER])

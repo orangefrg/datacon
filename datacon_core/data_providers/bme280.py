@@ -217,29 +217,31 @@ class BME280(Provider):
 # Overriding defaults
 
     def get_current_reading(self, src_id=None):
-        self.log_message("Reading values via I2C bus",logging.DEBUG)     
+        self.log_message("Reading values via I2C bus",logging.INFO)
+        self._read_raw_data()
+        self._calculate_parameters()     
         reading = []
-        reading.append({"name": "280_in.Chip_ID",
+        reading.append({"name": "Chip_ID",
                    "measured_parameter": "id",
                    "units": "",
                    "type": "Text",
                    "reading": self.chip_id})
-        reading.append({"name": "280_in.Temperature",
+        reading.append({"name": "Temperature",
                    "measured_parameter": "temperature",
                    "units": "°C",
                    "type": "Numeric",
                    "reading": self.temperature_celsius})
-        reading.append({"name": "280_in.Pressure",
+        reading.append({"name": "Pressure",
                    "measured_parameter": "pressure",
                    "units": "mm Hg",
                    "type": "Numeric",
                    "reading": self.pressure_mm_hg})
-        reading.append({"name": "280_in.Humidity",
+        reading.append({"name": "Humidity",
                    "measured_parameter": "humidity",
                    "units": "%",
                    "type": "Numeric",
                    "reading": self.humidity_percent})
-        reading.append({"name": "280_in.Dewpoint",
+        reading.append({"name": "Dewpoint",
                    "measured_parameter": "temperature",
                    "units": "°C",
                    "type": "Numeric",

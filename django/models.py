@@ -207,7 +207,7 @@ class TagNumericLimits(models.Model):
                   (self.lower_boundary, "L"),
                   (self.critical_lower_boundary, "CL")]:
             if t is not None:
-                latest = t[0].get_latest_value(by_date=by_date)
+                latest = t[0].get_latest_value()
                 if len(latest) > 0:
                     ret += " {}={},".format(t[1], latest[0].value)
         if ret=="":
