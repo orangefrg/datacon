@@ -1,0 +1,187 @@
+<template id="datatag-widget">
+    <div class="card"
+        v-bind:class="rdg.display.alert_state != null ? 'border-' + rdg.display.alert_state : ''"
+        v-bind:id="'widget-' + rdg.id">
+        <div class="card-body"
+            v-bind:class="rdg.display.alert_state != null ? 'text-' + rdg.display.alert_state : ''">
+            <h5 class="card-title data-tag-name">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-10">
+                            (( rdg.display_name ))
+                        </div>
+                        <div class="col-1">
+                            <span v-if="rdg.display.obsolete_server || rdg.display.obsolete_client" class="oi oi-warning text-danger" title="Данные могли устареть"></span>
+                        </div>
+                    </div>
+                </div>
+            </h5>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <label class="card-text display-4 data-tag-value"
+                            v-bind:style="{fontSize: rdg.display.reading.length > 8 ? rdg.display.reading.length > 10 ? rdg.display.reading.length > 13 ? '1.5rem' : '2rem' : '2.5rem' : fontSize}">
+                            (( rdg.display.reading ))
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-header">
+            <div class="row justify-content-center">
+                <div class="mb-0 btn-group">
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'trends-main-' + rdg.id"
+                        v-if="rdg.display.enabled_24h || rdg.display.enabled_3h">
+                        <span class="oi oi-elevator" data-toggle="tooltip" data-placement="top"
+                        title="Динамика"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'trend-main-' + rdg.id"
+                        v-if="rdg.display.graph != ''">
+                        <span class="oi oi-graph" data-toggle="tooltip" data-placement="top"
+                        title="График"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'maxmin-main-' + rdg.id"
+                        v-if="rdg.display.enabled_24h">
+                        <span class="oi oi-expand-up" data-toggle="tooltip" data-placement="top"
+                        title="Статистика"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary collapsed" data-toggle="collapse"
+                        v-bind:data-target="'#' + 'times-main-' + rdg.id">
+                        <span class="oi oi-clock" data-toggle="tooltip" data-placement="top"
+                        title="Время обновления"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="collapse"
+            v-bind:id="'trends-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id">
+            <ul class="list-group">
+                <li class="list-group-item" style="padding:0;">        
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                        title="динамика за три часа">
+                        <p class="mb-0"><span class="mr-2"
+                            style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">3 </span>
+                            <span  v-if="rdg.display.speed_3h != ''">
+                                (( rdg.display.speed_3h > 0 ? "+" + rdg.display.speed_3h : rdg.display.speed_3h )) (( rdg.units ))/час
+                            </span>
+                            <span v-else>
+                                значение стабильно
+                            </span>
+                            <span class="oi oi-caret-bottom text-danger"
+                            v-if="rdg.display.speed_3h < 0"
+                            style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                            <span class="oi oi-caret-top text-success"
+                             v-if="rdg.display.speed_3h > 0"
+                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                        </p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    title="динамика за сутки">
+                        <p class="mb-0"><span class="mr-2"
+                            style="font-size: 0.9rem; line-height:1.5; font-weight: bolder;">24</span>
+                            <span  v-if="rdg.display.speed_24h != ''">
+                                (( rdg.display.speed_24h > 0 ? "+" + rdg.display.speed_24h : rdg.display.speed_24h )) (( rdg.units ))/час
+                            </span>
+                            <span v-else>
+                                значение стабильно
+                            </span>
+                            <span class="oi oi-caret-bottom text-danger"
+                            v-if="rdg.display.speed_24h < 0"
+                            style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                            <span class="oi oi-caret-top text-success"
+                             v-if="rdg.display.speed_24h > 0"
+                             style="fontSize: 0.7rem; lineHeight: 1.6;"></span>
+                        </p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="collapse"
+            v-bind:id="'maxmin-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id"
+            v-if="rdg.display.enabled_24h">
+            <ul class="list-group">
+                <li class="list-group-item" style="padding:0;">        
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                        title="Максимум">
+                        <p class="mb-0"><span class="oi oi-data-transfer-upload mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.max_24h + ' ' + rdg.units )) - (( rdg.display.max_24h_time.toLocaleTimeString() ))</p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    title="Минимум">
+                        <p class="mb-0"><span class="oi oi-data-transfer-download mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.min_24h + ' ' + rdg.units )) - (( rdg.display.min_24h_time.toLocaleTimeString() ))</p>
+                    </div>
+                </li>
+                <li class="list-group-item" style="padding:0;">
+                    <div class="col" data-toggle="tooltip" data-placement="top"
+                    title="Среднее">
+                        <p class="mb-0"><span class="oi oi-ellipses mr-2"
+                            style="font-size: 0.9rem; line-height:1.5;"></span>(( rdg.display.avg_24h + ' ' + rdg.units )), измерений: (( rdg.display.num_24h)) </p>
+                    </div>
+                </li>
+            </ul>
+            
+        </div>
+        <div class="collapse"
+            v-bind:id="'times-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id">
+            <ul class="list-group">
+                    <li class="list-group-item" style="padding:0;">        
+                        <div class="col" data-toggle="tooltip" data-placement="top"
+                            title="Последнее изменение данных">
+                            <small class="mb-0">(( rdg.display.updated ))</small>
+                        </div>
+                    </li>
+                    <li class="list-group-item" style="padding:0;">
+                        <div class="col" data-toggle="tooltip" data-placement="top"
+                        title="Получение последнего обновления сервером">
+                            <small class="mb-0">(( rdg.display.received ))</small>
+                        </div>
+                    </li>
+                </ul>
+        </div>
+        <div class="collapse"
+            v-bind:id="'trend-main-' + rdg.id"
+            v-bind:data-parent="'#' + 'widget-' + rdg.id"
+            v-if="rdg.display.graph != ''">
+            <div class="container">
+                <svg viewBox="-10 -10 310 130" class="chart">
+                    <g class="grid x-grid" id="xGrid">
+                        <line x1="0" x2="0" y1="0" y2="120" stroke="#111111"></line>
+                    </g>
+                    <g class="grid y-grid" id="yGrid">
+                        <line x1="0" x2="300" y1="120" y2="120" stroke="#111111"></line>
+                        <line v-for="xline in rdg.display.graph_grid_x"
+                            x1="0"
+                            x2="300"
+                            v-bind:y1="xline[0]"
+                            v-bind:y2="xline[0]"
+                            stroke="#AAAAAA"></line>
+                    </g>
+                    <g class="labels y-labels">
+                        <text v-for="(xline, index) in rdg.display.graph_grid_x"
+                           v-if="rdg.display.graph_grid_x.length < 10 || index % 2 != 0"
+                           font-size="10"
+                           x="10"
+                           v-bind:y="xline[0] + 4">(( xline[1] ))</text>
+                    </g>
+                    <polyline
+                       fill="none"
+                       stroke="#0000ff"
+                       stroke-width="1.2"
+                       v-bind:points="rdg.display.graph"
+                     />
+                </svg>
+            </div>
+        </div>
+    </div>
+</template>

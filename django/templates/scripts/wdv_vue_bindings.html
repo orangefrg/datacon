@@ -1,0 +1,18 @@
+<script>
+    // VUE.js
+
+    var received_data = {
+        coreData: coreData
+    }
+
+    Vue.component('datatag-item', {
+        props: ['rdg'],
+        template: "#datatag-widget",
+        delimiters: ["((", "))"]
+        });
+
+    var app = new Vue({
+        el: '#main-app',
+        data: received_data
+    });
+</script>

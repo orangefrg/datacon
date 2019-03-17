@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+{% include "elements/header.html" %}
+<body>
+    {% include "scripts/basic.html" with vuejs=True %}
+    {% csrf_token %}
+    <input type="hidden" id="dataSetID" value="{{ dataset_id }}"/>
+    <div class="container">
+        <div class="card-columns" id="main-app">
+            <!-- cards here -->
+            <datatag-item v-for="rdg in coreData"
+                v-bind:rdg="rdg"
+                v-bind:key="rdg.id">
+            </datatag-item>
+        </div>
+    </div>
+    <!-- Vue here -->
+    {% include "scripts/wdv_data_receive.html" %}
+    {% include "scripts/wdv_vue_bindings.html" %}
+    {% include "elements/wdv_generic_widget.html" %}
+    {% include "scripts/convert_date.html" %}
+    {% include "scripts/wdv_data_request.html" %}
+
+</body>
+</html>
