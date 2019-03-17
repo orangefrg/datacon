@@ -1,11 +1,12 @@
-from .tags_getter import query_tags_range, query_tags_latest, query_tags_latest_n
+from .tags_getter import get_tags_values_latest, get_tags_values_range
 from .tags_getter import LIMITS_BASIC, LIMITS_DETAILED, LIMITS_NONE
 from django.core.exceptions import ObjectDoesNotExist
 
-from datacon.models import DataSet
+from datacon.models import ViewSet
 
+from uuid import UUID
 from datetime import datetime
-
+# TODO: DataSet refactoring
 
 # Result of multiple tags query:
 #
@@ -81,55 +82,66 @@ from datetime import datetime
 #   average
 #      reading
 
-
-def query_dataset_latest(dataset_id,
-                    only_valid=True,
-                    round_numerics=2,
-                    get_limits=LIMITS_BASIC,
-                    get_trends=[],
-                    diag_info=False):
+def _get_all_tags(viewset_id):
+    v_set = None
+    vid = UUID(viewset_id)
     try:
-        print(dataset_id)
-        ds = DataSet.objects.get(uid=dataset_id)
-    except:
-        result = {}
-        result["error"] = "Dataset not found"
-        return result
-    return query_tags_latest(ds.tags.all(), only_valid, round_numerics, get_limits, get_trends, diag_info)
+        v_set = ViewSet.objects.get(uid=viewset_id)
+    except ObjectDoesNotExist:
+        return None
+    out_tags = []
+    out_tags.extend(v_set.tags_numeric.all())
+    out_tags.extend(v_set.tags_discrete.all())
+    out_tags.extend(v_set.tags_text.all())
+    return out_tags
+
+
+def get_viewset_latest(viewset_id,
+                       only_valid=True,
+                       round_numerics=2,
+                       get_limits=LIMITS_BASIC,
+                       get_trends=[],
+                       diag_info=False):
+    t_start = datetime.now()
+    result = {}
+    tags = _get_all_tags(viewset_id)
+    if tags is None:
+        result = {
+            "tags": [],
+            "tag_count": 0,
+            "error": "Invalid ViewSet ID"
+        }
+    else:
+        result = get_tags_values_latest(tags, only_valid, round_numerics,
+                                        get_limits, get_trends, diag_info)
+    result["time_to_obtain"] = (datetime.now() - t_start).total_seconds()
+    return result
     
 
-def query_dataset_latest_n(dataset_id,
-                      depth=50,
+def get_viewset_range(viewset_id,
+                      date_start=None,
+                      date_end=None,
+                      number=50,
                       only_valid=True,
                       round_numerics=2,
                       get_limits=LIMITS_BASIC,
                       get_trends=[],
-                      diag_info=False):
-    try:
-        ds = DataSet.objects.get(uid=dataset_id)
-    except:
-        result = {}
-        result["error"] = "Dataset not found"
-        return result
-    return query_tags_latest_n(ds.tags.all(), depth, only_valid, round_numerics, get_limits, get_trends, diag_info)
-
-def query_dataset_range(dataset_id,
-                   date_start,
-                   date_end=datetime.now(),
-                   max_number=50,
-                   only_valid=True,
-                   round_numerics=2,
-                   get_limits=LIMITS_BASIC,
-                   get_trends=[],
-                   diag_info=False,
-                   bound_earlier=True,
-                   bound_later=False):
-    try:
-        ds = DataSet.objects.get(uid=dataset_id)
-    except:
-        result = {}
-        result["error"] = "Dataset not found"
-        return result
-    return query_tags_range(ds.tags.all(), date_start, date_end, max_number,
-                            only_valid, round_numerics, get_limits, get_trends, diag_info,
-                            bound_earlier, bound_later)
+                      diag_info=False,
+                      bound_earlier=True,
+                      bound_later=False):
+    t_start = datetime.now()
+    result = {}
+    tags = _get_all_tags(viewset_id)
+    if tags is None:
+        result = {
+            "tags": [],
+            "tag_count": 0,
+            "error": "Invalid ViewSet ID"
+        }
+    else:
+        result = get_tags_values_range(tags, date_start, date_end, number,
+                                       only_valid, round_numerics, get_limits,
+                                       get_trends, diag_info, bound_earlier,
+                                       bound_later)
+    result["time_to_obtain"] = (datetime.now() - t_start).total_seconds()
+    return result

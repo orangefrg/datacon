@@ -32,16 +32,16 @@ class Ds18b20(Provider):
                     self._add_sensor(f)
 
 
-    def __init__(self, name, description, scheduler, amqp=True, publish_routing_key="all.all",
-                 command_routing_keys=[], pass_to=None, loglevel=logging.DEBUG, sensor_aliases={}):
+    def __init__(self, name, description, scheduler, broker="amqp", publish_routing_key="all.all",
+                 command_routing_keys=[], redis_channel="all", pass_to=None, loglevel=logging.DEBUG, sensor_aliases={}):
         self._sensors = []
         self._sensor_aliases = sensor_aliases
         
         self._crc_re = re.compile("(YES|NO)")
         self._temp_re = re.compile("t=(([-]*)(\d+))")
 
-        super().__init__(name, description, scheduler, amqp, publish_routing_key,
-                         command_routing_keys, pass_to, loglevel)
+        super().__init__(name, description, scheduler, broker, publish_routing_key,
+                         command_routing_keys, redis_channel, pass_to, loglevel)
         self._refresh_sensors_list()
 
 
@@ -78,6 +78,7 @@ class Ds18b20(Provider):
                     current["reading"] = temp
                     current["units"] = "°C"
                     current["measured_parameter"] = "temperature"
+                    current["type"] = "Numeric"
                 reading.append(current)
             except:
                 self.log_message("Error querying sensors: {}".format(sys.exc_info()[0]), logging.ERROR)   

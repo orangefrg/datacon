@@ -1,34 +1,35 @@
 from scipy import stats
 import numpy as np
 from datetime import datetime, timedelta
-from datacon.models import ReadingNumeric
+from datacon.models import ValueNumeric
 
 TREND_LOWER_COUNT = 5
 
-def _get_trend(readings, depth=None):
+def _get_trends_for_values(values, depth=None):
     trend_info = {}
-    if len(readings) == 0:
+    if len(values) == 0:
         trend_info["error"] = "No data"
         return trend_info
-    peaks = sorted(readings, key=lambda k: k.reading, reverse=True)
+    elif depth is not None:
+        if len(values) <= depth:
+            trend_info["error"] = "Low values count"
+        else:
+            values = values[:depth]
+    peaks = sorted(values, key=lambda k: k.value, reverse=True)
     peak_max = peaks[0]
     peak_min = peaks[-1]
     trend_info["peak_max"] = {}
-    trend_info["peak_max"]["reading"] = peak_max.reading
-    trend_info["peak_max"]["time"] = peak_max.timestamp_packet
+    trend_info["peak_max"]["reading"] = peak_max.value
+    trend_info["peak_max"]["time"] = peak_max.timestamp_obtain
     trend_info["peak_min"] = {}
-    trend_info["peak_min"]["reading"] = peak_min.reading
-    trend_info["peak_min"]["time"] = peak_min.timestamp_packet
-    if len(readings) <= TREND_LOWER_COUNT:
-        trend_info["error"] = "Less than {} values count".format(TREND_LOWER_COUNT)
+    trend_info["peak_min"]["reading"] = peak_min.value
+    trend_info["peak_min"]["time"] = peak_min.timestamp_obtain
+    if len(values) <= TREND_LOWER_COUNT:
+        trend_info["error"] = "Insufficient values count"
         return trend_info
-    elif depth is not None and len(readings) <= depth:
-        trend_info["caution"] = "Low values count"
-    if depth is not None:
-        readings = readings[:depth]
     latest_np = []
-    for v in readings:
-        latest_np.append((v.timestamp_packet.timestamp(), v.reading))
+    for v in values:
+        latest_np.append((v.timestamp_obtain.timestamp(), v.value))
     latest_np = np.array(latest_np)
     slope, intercept, r_value, p_value, std_err = stats.linregress(latest_np)
     wgt = []
@@ -45,37 +46,22 @@ def _get_trend(readings, depth=None):
     return trend_info
 
 
-def get_trend_by_count(reading, depth=50):
-    r_class = reading.__class__
-    if r_class != ReadingNumeric:
-        return None
-    latest_n = list(r_class.objects.filter(tag=reading.tag, error=None, timestamp_packet__lt=reading.timestamp_packet).order_by('-timestamp_packet'))
-    trend_info = _get_trend(latest_n)
-    trend_info["period_seconds"] = int((latest_n[0].timestamp_packet - latest_n[-1].timestamp_packet).total_seconds())
+def get_trend_by_age(value, age=timedelta(hours=3)):
+    oldest_time = value.timestamp_obtain - age
+    latest_n = list(ValueNumeric.objects.filter(tag=value.tag,
+                                                timestamp_obtain__lte=value.timestamp_obtain,
+                                                timestamp_obtain__gte=oldest_time,
+                                                error=None).exclude(value=None).order_by('-timestamp_obtain'))
+    trend_info = _get_trends_for_values(latest_n)
+    trend_info["period_seconds"] = int(age.total_seconds())
     trend_info["number"] = len(latest_n)
     return trend_info
 
-def get_trend_by_timedelta(reading, timedelta=timedelta(hours=3)):
-    r_class = reading.__class__
-    if r_class != ReadingNumeric:
-        return None
-    upper_time = reading.timestamp_packet - timedelta
-    latest_n = list(r_class.objects.filter(tag=reading.tag, error=None, timestamp_packet__lt=reading.timestamp_packet,
-                                      timestamp_packet__gt=upper_time).order_by('-timestamp_packet'))
-    trend_info = _get_trend(latest_n)
-    trend_info["period_seconds"] = int(timedelta.total_seconds())
-    trend_info["number"] = len(latest_n)
-    return trend_info
 
-def get_trend_by_list(readings):
-    num_readings = []
-    for r in readings:
-        if r.__class__ == ReadingNumeric:
-            num_readings.append(r)
-    trend_info = _get_trend(readings)
-    num_readings = sorted(num_readings, key=lambda k: k.timestamp_packet, reverse=True)
-    trend_info["period_seconds"] = int((num_readings[0].timestamp_packet - num_readings[-1].timestamp_packet).total_seconds())
-    trend_info["number"] = len(num_readings)
+def get_trend_by_values(values):
+    trend_info = _get_trends_for_values(values)
+    values = sorted(values, key=lambda k: k.timestamp_obtain, reverse=True)
+    trend_info["period_seconds"] = int((values[0].timestamp_obtain - values[-1].timestamp_obtain).total_seconds())
+    trend_info["number"] = len(values)
     return trend_info
-    
-    
+ 

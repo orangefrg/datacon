@@ -1,0 +1,83 @@
+{
+  "time_to_obtain": 35,
+  "tag_count": 2,
+  "error": "a",
+  "tags": [
+    {
+      "name": "Name",
+      "display_name": "DName",
+      "units": "Units",
+      "error": "B",
+      "readings": [
+        {
+          "reading": 25,
+          "timestamp_receive": "11-22-11",
+          "timestamp_packet": "12-23-12",
+          "time_to_obtain": 45,
+          "trends": [
+            {
+              "period_seconds": 18400,
+              "number": 455,
+              "direction": "up",
+              "slope": 24,
+              "peak_max": {
+                "reading": 22,
+                "time": "11-22-63"
+              },
+              "peak_min": {
+                "reading": 10,
+                "time": "11-22-64"
+              },
+              "average": {
+                "reading": 12
+              }
+            }
+          ],
+          "limits": 
+            {
+              "state": "lower_critical",
+              "details": {
+                "lower_critical": {
+                  "reading": 0,
+                  "status": "in"
+                },
+                "lower": {
+                  "reading": 0,
+                  "status": "out"
+                },
+                "strict": {
+                  "reading": 0,
+                  "status": "marginal"
+                },
+                "upper": {
+                  "reading": 0,
+                  "status": "in"
+                },
+                "upper_critical": {
+                  "reading": 0,
+                  "status": "in"
+                }
+              }
+          }
+        }
+      ],
+      "trend": {
+        "period_seconds": 18400,
+        "number": 455,
+        "direction": "up",
+        "slope": 24,
+        "peak_max": {
+          "reading": 22,
+          "time": "11-22-63"
+        },
+        "peak_min": {
+          "reading": 10,
+          "time": "11-22-64"
+        },
+        "average": {
+          "reading": 12
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 <script>
 
-    var request_big_counter = 8;
-    const request_big_interval = 10;
+    var request_big_counter = 2;
+    const request_big_interval = 4;
     var request_counter = 29;
     const request_interval = 30;
     var stDate, finDate;
@@ -36,9 +36,11 @@
             var initDate = new Date();
             initDate.setHours(stDate.getHours() - 12);
             temp_parameters.date_start = initDate.toISOString();
-            temp_parameters.max_number = 400;
+            temp_parameters.number = 400;
             request_big_counter = 0;
         }
+        diagData.request_start = stDate;
+        console.log("Starting " + rqType + " request...")
         $.post("/datacon/display/webapi", {settings: JSON.stringify(temp_parameters)}, processCoreData);
     };
 

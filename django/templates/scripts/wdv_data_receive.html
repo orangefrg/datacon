@@ -4,6 +4,8 @@
     var diagData = {};
 
     var lastResult = null;
+    const graphWidth = 300;
+    const graphHeight = 120;
 
     function compareReadingsByTimestamp(a, b) {
         var dt_a = getDateFromISO(a.timestamp_packet);
@@ -69,8 +71,86 @@
         return element;
     }
 
+    function generateGridValues(limits_value, ticks_value=10, max_ticks=20, min_ticks=2) {
+        var span_value = limits_value[1] - limits_value[0];
+        var single_tick = span_value / ticks_value;
+        var suggested_tick = 1;
+        var stopFlag = false;
+        var suggested_next = 1;
+        var grid_value = [];
+        var five = true;
+        while(!stopFlag) {
+            if (single_tick >= 1) {
+                if(span_value / suggested_tick <= max_ticks) {
+                    stopFlag = true;
+                }
+                if (five) {
+                    suggested_tick *= 5;
+                }
+                else {
+                    suggested_tick *= 2;
+                }
+            }
+            else {
+                if(span_value / suggested_tick >= min_ticks) {
+                    stopFlag = true;
+                }
+                if (five) {
+                    suggested_tick /= 2;
+                }
+                else {
+                    suggested_tick /= 5;
+                }
+            }
+            five = !five;
+        }
+        var lower_value = Math.floor(limits_value[0] * suggested_tick) / suggested_tick;
+        var upper_value = Math.ceil(limits_value[1] * suggested_tick) / suggested_tick;
+        for (i = upper_value; i >= lower_value; i -= suggested_tick) {
+            var val = Math.round(i / suggested_tick) * suggested_tick;
+            if (suggested_tick < 1) {
+                val = val.toFixed(-Math.log10(suggested_tick));
+            }
+            else {
+                val = Math.round(val);
+            }
+            var grid_line = graphHeight - (val - limits_value[0]) / (limits_value[1] - limits_value[0]) * (graphHeight - 10) - 5;
+            if (grid_line <= graphHeight) {
+                grid_value.push([grid_line, val]);
+            }
+        }
+        return grid_value;
+    }
+
+    function generateGridTime(limits_time, ticks_time=10, max_ticks=20, min_ticks=2) {
+        var span_time = limits_time[1] - limits_time[0];
+        var single_tick = span_time / ticks_time;
+        var suggested_tick = 1000;
+        var stopFlag = false;
+        var suggested_next = 1000;
+        var mulitpliers = [5, 2, 3, 2, 5, 2, 3, 2, 3, 2, 2, 2, 7, 5, 10];
+        for (i=0;i<mulitpliers.length;i++) {
+            if (span_value / suggested_tick <= min_ticks && span_value / suggested_tick >= max_ticks) {
+                stopFlag = true;
+                break;
+            }
+            suggested_tick *= mulitpliers[i];
+        }
+        if (!stopFlag) {
+            if (single_tick < 1000) {
+                suggested_tick = 500;
+            }
+            else {
+                // 5 years
+                suggested_tick = 157784630000;
+            }
+        }
+        // TODO: conversion from ms to human-readable dates
+    }
+
     function processSingleTag(tag) {
         var dsp = {
+            processed: Date.now(),
             received: "--",
             updated: "--",
             reading: "--",
@@ -86,12 +166,23 @@
             max_3h: "",
             min_3h: "",
             avg_3h: "",
+            graph: "",
+            graph_grid_x: [],
+            graph_grid_y: [],
             enabled_3h: false,
+            obsolete_server: false,
+            obsolete_client: false
         }
         if (tag.readings.length>0) {
-            dsp.received = getTimeFromNow(tag.readings[0].timestamp_packet, "Последнее изменение");
-            dsp.updated = getTimeFromNow(tag.readings[0].timestamp_receive, "Обновлено");
-            dsp.reading = tag.readings[0].reading + " " + tag.units;
+            var t_packet = parseTimestamp(tag.readings[0].timestamp_packet);
+            var t_receive = parseTimestamp(tag.readings[0].timestamp_receive);
+            dsp.obsolete_server = t_receive.hours > 0;
+            dsp.received = getTimeFromNow(t_packet, "Последнее изменение");
+            dsp.updated = getTimeFromNow(t_receive, "Обновлено");
+            dsp.reading = tag.readings[0].reading;
+            if (tag.hasOwnProperty("units") && tag.units != null && tag.units != "") {
+                dsp.reading += " " + tag.units;
+            }
             tag.enabled = true
             if (tag.readings[0].limits != null) {
                 // Limits
@@ -139,6 +230,41 @@
                         continue;
                     }
                 }
+                if (tag.readings.length > 4) {
+                    // Calculate trends
+                    var values = [];
+                    var timestamps = [];
+                    var min_val, max_val, min_time, max_time;
+                    var latest = getDateFromISO(tag.readings[0].timestamp_packet);
+                    for (i = 0; i < tag.readings.length; i++) {
+                        var t_stamp = getDateFromISO(tag.readings[i].timestamp_packet);
+                        if (latest - t_stamp > 86400000) {
+                            break;
+                        }
+                        var val = tag.readings[i].reading;
+                        if(val != null) {
+                            if (min_val == undefined || val < min_val) {
+                                min_val = val;
+                            }
+                            if (max_val == undefined || val > max_val) {
+                                max_val = val;
+                            }
+                            if (min_time == undefined || t_stamp < min_time) {
+                                min_time = t_stamp;
+                            }
+                            if (max_time == undefined || t_stamp > max_time) {
+                                max_time = t_stamp;
+                            }
+                            values.push([val, null, t_stamp, null]);
+                        }
+                    }
+                    for (i = values.length - 1; i >= 0; i--) {
+                        values[i][1] = graphHeight - (values[i][0] - min_val) / (max_val - min_val) * (graphHeight - 10) - 5;
+                        values[i][3] = (values[i][2] - min_time) / (max_time - min_time) * graphWidth;
+                        dsp.graph += values[i][3] + ", " + values[i][1] + "\n";
+                    }
+                    dsp.graph_grid_x = generateGridValues([min_val, max_val]);
+                }
             }
         }
         else {
@@ -163,9 +289,14 @@
             var element = updateSingleTag(response.tags[k], k);
             processSingleTag(element);
         }
+        var dt = Date.now();
+        for (k=0; k<coreData.length; k++) {
+            var processedTime = parseInt((dt - coreData[k].display.processed) / 60000);
+            coreData[k].display.obsolete_client = processedTime > 3;
+        }
         diagData.request_in_progress = false;
         finDate = new Date();
-        diagData.request_timing = (finDate - stDate)/1000;
-        console.log("Finished request in " + diagData.time_to_request + " seconds");     
+        diagData.request_timing = (finDate - diagData.request_start)/1000;
+        console.log("Finished request in " + diagData.request_timing + " seconds");
     }
 </script>

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from datacon.models import ReadingNumeric, ReadingDiscrete, ReadingText, DataTag
-from datacon.analysis.trends import get_trend_by_count, get_trend_by_timedelta, get_trend_by_list
+from datacon.models import TagNumeric, TagDiscrete, TagText
+from datacon.analysis.trends import get_trend_by_age, get_trend_by_values
 from datacon.analysis.limits import get_tag_limits
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -56,7 +56,7 @@ LIMITS_DETAILED = 2
 #            reading
 #            status
 #         strict (if exists)
-#            reading
+#            readingget_trend_by_count
 #            status
 #         upper (if exists)
 #            reading
@@ -82,6 +82,27 @@ LIMITS_DETAILED = 2
 #   average
 #      reading
 
+def _find_tags(input_tag_names):
+    tags = []
+    missing_tags = []
+    for i in input_tag_names:
+        found = False
+        for t in [TagDiscrete, TagNumeric, TagText]:
+            try:
+                tags.append(t.objects.get(data_source__uid=i["datasource_id"], name=i["name"]))
+                found = True
+                break
+            except ObjectDoesNotExist:
+                pass
+        if not found:
+            missing_tags.append({
+                "name": i["name"],
+                "display_name": i["name"],
+                "error": "Tag not found"
+            })
+    return tags, missing_tags
+
+
 def _process_tag(tag,
                  round_numerics=2,
                  only_valid=True,
@@ -96,76 +117,64 @@ def _process_tag(tag,
     result = {}
     result["name"] = tag.name
     result["display_name"] = tag.display_name
-    result["units"] = tag.units
+    if hasattr(tag, "units") and tag.units is not None:
+        result["units"] = tag.units
     readings = []
-    if date_start is not None:
-        readings = tag.range_of_readings(date_start, date_end, number, only_valid, bound_earlier, bound_later)
-    elif number is not None:
-        readings = tag.latest_n_readings(number, only_valid)
+    if date_start is not None or number is not None:
+        readings = tag.get_range_of_values(date_start=date_start, date_end=date_end, only_valid=only_valid, max_number=number, bound_earlier=bound_earlier)
     else:
-        readings = [tag.latest_reading(only_valid)]
+        readings = tag.get_latest_value(only_valid)
     result["readings"] = []
-    init_reading = True
+    # Trends are needed only for numeric tags
+    init_reading = isinstance(tag, TagNumeric)
     for r in readings:
-        rdg = {} 
-        if round_numerics is not None and isinstance(r, ReadingNumeric) and r.reading is not None:
-            rdg["reading"] = round(r.reading, round_numerics)
+        rdg = {}
+        if round_numerics is not None and isinstance(tag, TagNumeric) and r.value is not None:
+            rdg["reading"] = round(r.value, round_numerics)
         else:
-            rdg["reading"] = r.reading
+            rdg["reading"] = r.value
         if r.error is not None:
             rdg["error"] = {}
             rdg["error"]["name"] = r.error.error
             rdg["error"]["description"] = r.error.description
-        rdg["timestamp_receive"] = r.timestamp_receive
-        rdg["timestamp_packet"] = r.timestamp_packet
+        rdg["timestamp_receive"] = r.timestamp_update
+        rdg["timestamp_packet"] = r.timestamp_obtain
         if diag_info:
             rdg["time_to_obtain"] = r.time_to_obtain
         if init_reading:
             init_reading = False
             rdg["trends"] = []
             for t in get_trends:
-                trd = get_trend_by_timedelta(r, timedelta(seconds=t))
+                trd = get_trend_by_age(r, timedelta(seconds=t))
                 rdg["trends"].append(trd)
         if get_limits >= LIMITS_BASIC:
             rdg["limits"] = get_tag_limits(r, get_limits >= LIMITS_DETAILED)
         result["readings"].append(rdg)
-    if len(readings) > 1:
-        result["trend"] = get_trend_by_list(readings)
+    if isinstance(tag, TagNumeric) and len(readings) > 1:
+        result["trend"] = get_trend_by_values(readings)
     return result
-        
 
 # get_trends is valid is following way
 # for latest tag trends are calculated for the only reading
 # for multiple tag readings trends are calculated for the latest reading
 # summary trends are calculated only if there is more than one result
 
-def obtain_tags_list(input_tag_names):
-    tags = []
-    pre_result = []
-    for i in input_tag_names:
-        try:
-            tags.append(DataTag.objects.get(source__uid=i["datasource"], name=i["name"]))
-        except ObjectDoesNotExist:
-            pre_result.append({
-                "name": i["name"],
-                "display_name": i["name"],
-                "error": "Tag not found"
-            })
-    return tags, pre_result
-
-
-def query_tags_latest(tags,
-                    only_valid=True,
-                    round_numerics=2,
-                    get_limits=LIMITS_BASIC,
-                    get_trends=[],
-                    diag_info=False):
+def get_tags_values_latest(tags,
+                           only_valid=True,
+                           round_numerics=2,
+                           get_limits=LIMITS_BASIC,
+                           get_trends=[],
+                           diag_info=False):
     t_start = datetime.now()
     result = {
-        "tags": []
+        "tags": [],
+        "tag_count": len(tags)
     }
-    for t in tags:
-        result["tags"].append(_process_tag(t, round_numerics, only_valid, get_limits, get_trends, diag_info))
+    if len(tags) == 0:
+        result["error"] = "No tags"
+    else:
+        for t in tags:
+            result["tags"].append(_process_tag(t, round_numerics, only_valid, get_limits, get_trends, diag_info))
     time_to_obtain = (datetime.now() - t_start).total_seconds()
     if round_numerics is not None:
         result["time_to_obtain"] = round(time_to_obtain, round_numerics)
@@ -175,19 +184,30 @@ def query_tags_latest(tags,
     return result
 
 
-def query_tags_latest_n(tags,
-                      depth=50,
-                      only_valid=True,
-                      round_numerics=2,
-                      get_limits=LIMITS_BASIC,
-                      get_trends=[],
-                      diag_info=False):
+def get_tags_values_range(tags,
+                          date_start=None,
+                          date_end=datetime.now(),
+                          number=50,
+                          only_valid=True,
+                          round_numerics=2,
+                          get_limits=LIMITS_BASIC,
+                          get_trends=[],
+                          diag_info=False,
+                          bound_earlier=True,
+                          bound_later=False):
     t_start = datetime.now()
     result = {
-        "tags": []
+        "tags": [],
+        "tag_count": len(tags)
     }
-    for t in tags:
-        result["tags"].append(_process_tag(t, round_numerics, only_valid, get_limits, get_trends, diag_info, number=depth))
+    if len(tags) == 0:
+        result["error"] = "No tags"
+    else:
+        for t in tags:
+            result["tags"].append(_process_tag(t, round_numerics, only_valid,
+                                               get_limits, get_trends, diag_info,
+                                               date_start, date_end, number,
+                                               bound_earlier, bound_later))
     time_to_obtain = (datetime.now() - t_start).total_seconds()
     if round_numerics is not None:
         result["time_to_obtain"] = round(time_to_obtain, round_numerics)
@@ -196,31 +216,38 @@ def query_tags_latest_n(tags,
     result["tag_count"] = len(result["tags"])
     return result
 
-def query_tags_range(tags,
-                   date_start,
-                   date_end=datetime.now(),
-                   max_number=50,
-                   only_valid=True,
-                   round_numerics=2,
-                   get_limits=LIMITS_BASIC,
-                   get_trends=[],
-                   diag_info=False,
-                   bound_earlier=True,
-                   bound_later=False):
-    t_start = datetime.now()
-    result = {
-        "tags": []
-    }
-    for t in tags:
-        result["tags"].append(_process_tag(t, round_numerics, only_valid,
-                                           get_limits, get_trends, diag_info,
-                                           date_start, date_end, max_number,
-                                           bound_earlier, bound_later))
-    time_to_obtain = (datetime.now() - t_start).total_seconds()
-    if round_numerics is not None:
-        result["time_to_obtain"] = round(time_to_obtain, round_numerics)
-    else:
-        result["time_to_obtain"] = time_to_obtain
-    result["tag_count"] = len(result["tags"])
+
+def get_tags_latest_by_names(tags,
+                             only_valid=True,
+                             round_numerics=2,
+                             get_limits=LIMITS_BASIC,
+                             get_trends=[],
+                             diag_info=False):
+    tags_db, missing = _find_tags(tags)
+    result = get_tags_values_latest(tags_db, only_valid,
+                                    round_numerics, get_limits,
+                                    get_trends, diag_info)
+    if len(missing) > 0:
+        result["tags"].extend(missing)
     return result
 
+
+def get_tags_range_by_names(tags,
+                            date_start=None,
+                            date_end=datetime.now(),
+                            number=50,
+                            only_valid=True,
+                            round_numerics=2,
+                            get_limits=LIMITS_BASIC,
+                            get_trends=[],
+                            diag_info=False,
+                            bound_earlier=True,
+                            bound_later=False):
+    tags_db, missing = _find_tags(tags)
+    result = get_tags_values_range(tags_db, date_start, date_end,
+                                   number, only_valid, round_numerics,
+                                   get_limits, get_trends, diag_info,
+                                   bound_earlier, bound_later)
+    if len(missing) > 0:
+        result["tags"].extend(missing)
+    return result
