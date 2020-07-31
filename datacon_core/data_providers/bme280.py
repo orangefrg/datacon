@@ -210,8 +210,8 @@ class BME280(Provider):
         elif var_H < 0.0:
             var_H = 0.0
         self.humidity_percent = var_H
-        dewpoint_gamma = 17.27 * self.temperature_celsius / (237.7 + self.temperature_celsius) + log(self.humidity_percent)
-        self.dewpoint_celsius = 17.27 * dewpoint_gamma / (237.7 - dewpoint_gamma)
+        dewpoint_gamma = 17.27 * self.temperature_celsius / (237.7 + self.temperature_celsius) + log(self.humidity_percent / 100)
+        self.dewpoint_celsius = 237.7 * dewpoint_gamma / (17.27 - dewpoint_gamma)
 
 
 # Overriding defaults
