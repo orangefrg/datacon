@@ -1,6 +1,7 @@
 from utime import time
+from provider_proto import DataProvider
 
-class BH1750:
+class BH1750(DataProvider):
 
     DEFAULT_ADDRESS_LOW = 0x23 # Addr pin is left floating or pulled down
     DEFAULT_ADDRESS_HIGH = 0x5C # Addr pin is pulled up
@@ -23,12 +24,12 @@ class BH1750:
 
     DEFAULT_LIGHT_SENSITIVITY = 69 # 31 to 254
 
-    def __init__(self, name, i2c_bus, address=DEFAULT_ADDRESS_LOW):
-        self.name = name
+    def __init__(self, name, rtc, i2c_bus, address=DEFAULT_ADDRESS_LOW):
         self.bus = i2c_bus
         self.address = address
         self.data_buffer = bytearray(2)
         self.light_intensity_lx = None
+        super().__init__(name, rtc)
 
     def _write_mode_and_res(self):
         self.bus.writeto(self.address, bytearray([self.mode + self.resolution]))
@@ -55,11 +56,28 @@ class BH1750:
         self.bus.writeto(self.address, bytearray([self.POWER_OFF]))
         self.is_powered = False
 
+    def _perform_correction(self):
+        if self.light_intensity_lx is not None:
+            if self.light_intensity_lx >= 65000 and self.sensitivity > 31:
+                self.sensitivity -= 20
+                if self.sensitivity < 31:
+                    self.sensitivity = 31
+                print("BH1750 decreases sensitivity to {}".format(self.sensitivity))
+            elif self.light_intensity_lx <= 5 and self.sensitivity < 254:
+                self.sensitivity += 20
+                if self.sensitivity > 254:
+                    self.sensitivity = 254
+                print("BH1750 increases sensitivity to {}".format(self.sensitivity))
+        self._write_sensitivity()
+
     # Time (in seconds) needed to measure light is returned
     # if device is not powered, None is returned
-    def request_data(self):
+    def request_data(self, allow_corrections=True):
+        self._start_message()
         if not self.is_powered:
             self.power_on()
+        if allow_corrections:
+            self._perform_correction()
         self._write_mode_and_res()
         if self.mode == self.MODE_ONETIME:
             self.is_powered = False
@@ -68,9 +86,25 @@ class BH1750:
         else:
             return self.TIME_HIRES * (self.sensitivity/self.DEFAULT_LIGHT_SENSITIVITY)
     
-    def read_data(self):
+    def _read_data(self):
         self.bus.readfrom_into(self.address, self.data_buffer)
         raw_lx = (self.data_buffer[0] << 8 | self.data_buffer[1]) / 1.2
         if self.resolution == self.RES_05:
             raw_lx *= 2
         self.light_intensity_lx = raw_lx * (self.DEFAULT_LIGHT_SENSITIVITY / self.sensitivity)
+
+    def get_readings(self):
+        self._read_data()  
+        readings = []
+        readings.append({"name": "Light",
+                   "measured_parameter": "intensity",
+                   "units": "lx",
+                   "type": "Numeric",
+                   "reading": self.light_intensity_lx})
+        readings.append({"name": "Light",
+                   "measured_parameter": "sensitivity",
+                   "units": "",
+                   "type": "Numeric",
+                   "reading": self.sensitivity})
+        self._finalize_message(readings)
+        return self.message

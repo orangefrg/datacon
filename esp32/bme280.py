@@ -1,54 +1,56 @@
 import time
 from math import log
+from micropython import const
+from provider_proto import DataProvider
 
-class BME280:
+class BME280(DataProvider):
 
-    DEFAULT_ADDRESS = 0x76
+    DEFAULT_ADDRESS = const(0x76)
 
-    OVERSAMPLING_1 = 1
-    OVERSAMPLING_2 = 2
-    OVERSAMPLING_4 = 3
-    OVERSAMPLING_8 = 4
-    OVERSAMPLING_16 = 5
+    OVERSAMPLING_1 = const(1)
+    OVERSAMPLING_2 = const(2)
+    OVERSAMPLING_4 = const(3)
+    OVERSAMPLING_8 = const(4)
+    OVERSAMPLING_16 = const(5)
 
-    STANDBY_0p5 = 0
-    STANDBY_62p5 = 1
-    STANDBY_125 = 2
-    STANDBY_250 = 3
-    STANDBY_500 = 4
-    STANDBY_1000 = 5
-    STANDBY_10 = 6
-    STANDBY_20 = 7
+    STANDBY_0p5 = const(0)
+    STANDBY_62p5 = const(1)
+    STANDBY_125 = const(2)
+    STANDBY_250 = const(3)
+    STANDBY_500 = const(4)
+    STANDBY_1000 = const(5)
+    STANDBY_10 = const(6)
+    STANDBY_20 = const(7)
 
-    FILTER_0 = 0
-    FILTER_2 = 1
-    FILTER_4 = 2
-    FILTER_8 = 3
-    FILTER_16 = 4
+    FILTER_0 = const(0)
+    FILTER_2 = const(1)
+    FILTER_4 = const(2)
+    FILTER_8 = const(3)
+    FILTER_16 = const(4)
 
-    MODE_SLEEP = 0x00
-    MODE_FORCED = 0x01
-    MODE_NORMAL = 0x03
+    MODE_SLEEP = const(0x00)
+    MODE_FORCED = const(0x01)
+    MODE_NORMAL = const(0x03)
 
-    CALIBRATION_1_START = 0x88
-    CALIBRATION_1_LENGTH = 24
-    CALIBRATION_1_TAIL = 0xA1
-    CALIBRATION_2_START = 0xE1
-    CALIBRATION_2_LENGTH = 7
+    CALIBRATION_1_START = const(0x88)
+    CALIBRATION_1_LENGTH = const(24)
+    CALIBRATION_1_TAIL = const(0xA1)
+    CALIBRATION_2_START = const(0xE1)
+    CALIBRATION_2_LENGTH = const(7)
 
-    ADDRESS_CHIPID = 0xD0
-    ADDRESS_VERSION = 0xD1
-    ADDRESS_SOFTRESET = 0xE0
+    ADDRESS_CHIPID = const(0xD0)
+    ADDRESS_VERSION = const(0xD1)
+    ADDRESS_SOFTRESET = const(0xE0)
 
-    ADDRESS_STATUS = 0xF3
-    ADDRESS_CONTROL_HUM = 0xF2
-    ADDRESS_CONTROL = 0xF4
-    ADDRESS_CONFIG = 0xF5
-    ADDRESS_DATA = 0xF7
+    ADDRESS_STATUS = const(0xF3)
+    ADDRESS_CONTROL_HUM = const(0xF2)
+    ADDRESS_CONTROL = const(0xF4)
+    ADDRESS_CONFIG = const(0xF5)
+    ADDRESS_DATA = const(0xF7)
 
-    DATA_LENGTH = 8
+    DATA_LENGTH = const(8)
 
-    def __init__(self, name, i2c_bus,
+    def __init__(self, name, rtc, i2c_bus,
                  address=DEFAULT_ADDRESS, standby=STANDBY_125, forced_mode=False,
                  pressure_os=OVERSAMPLING_4, temperature_os=OVERSAMPLING_4,
                  humidity_os=OVERSAMPLING_2, iir_filter=FILTER_2):
@@ -69,6 +71,7 @@ class BME280:
             self._upload_settings_hum()
             self._upload_settings_measurement()
             self._upload_settings_config()
+            super().__init__(name, rtc)
 
         except:
             print("Failed to initialize")
@@ -163,7 +166,8 @@ class BME280:
         self._upload_settings_measurement()
 
     # Getting raw data
-    def read_data(self):
+    def _read_data(self):
+        self._start_message()
         if self.forced_mode:
             self._set_forced_mode()
             t_measure_max = 1.25 + (2.3 * self.temperature_os) + (2.3 * self.pressure_os + 0.575) + (2.3 * self.humidity_os + 0.575)
@@ -208,3 +212,34 @@ class BME280:
         self.humidity_percent = var_H
         dewpoint_gamma = 17.27 * self.temperature_celsius / (237.7 + self.temperature_celsius) + log(self.humidity_percent / 100)
         self.dewpoint_celsius = 237.7 * dewpoint_gamma / (17.27 - dewpoint_gamma)
+
+    def get_readings(self):
+        self._read_data()       
+        readings = []
+        readings.append({"name": "Chip_ID",
+                        "measured_parameter": "id",
+                        "units": "",
+                        "type": "Text",
+                        "reading": self.chip_id})
+        readings.append({"name": "Temperature",
+                        "measured_parameter": "temperature",
+                        "units": "C", # °C
+                        "type": "Numeric",
+                        "reading": self.temperature_celsius})
+        readings.append({"name": "Pressure",
+                        "measured_parameter": "pressure",
+                        "units": "mm Hg",
+                        "type": "Numeric",
+                        "reading": self.pressure_mm_hg})
+        readings.append({"name": "Humidity",
+                        "measured_parameter": "humidity",
+                        "units": "%",
+                        "type": "Numeric",
+                        "reading": self.humidity_percent})
+        readings.append({"name": "Dewpoint",
+                        "measured_parameter": "temperature",
+                        "units": "C",
+                        "type": "Numeric",
+                        "reading": self.dewpoint_celsius})
+        self._finalize_message(readings)
+        return self.message
