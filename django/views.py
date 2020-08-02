@@ -11,7 +11,13 @@ import json
 @csrf_exempt
 def process_incoming(request, source_id):
     if request.method == "POST":
-       process_message(source_id, request.POST)
+       inc = None
+       if request.POST is None or len(request.POST) == 0:
+           #ESP32 hack
+           inc = json.loads(request.body.decode())
+       else:
+           inc = request.POST
+       process_message(source_id, inc)
     return HttpResponse()
 
 def web_data_view(request, dataset_id):

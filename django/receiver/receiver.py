@@ -11,10 +11,17 @@ def process_message(datasource, message):
     except ObjectDoesNotExist:
         raise Http404
     try:
-        msg = json.loads(message["message"])
+        if type(message["message"]) == str:
+            # Datacon
+            msg = json.loads(message["message"])
+        else:
+            # ESP32
+            msg = message["message"]
+        print(msg)
     except:
         return (400, "Incorrect message")
     fails = write_reading(ds, msg)
+    print(fails)
     # TODO: report of failed write attempts
     return (200, "Message received")
 
@@ -46,7 +53,8 @@ def try_to_save_value(tag, tag_type, value, error=None, timestamp_obtain=datetim
     else:
         parsed_val = value
     tag.add_value(parsed_val, error, timestamp_obtain, time_to_obtain)
-        
+    return True
+
 
 def write_reading(datasource, message_as_dict):
     provider_name = message_as_dict["name"]
